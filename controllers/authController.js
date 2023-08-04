@@ -2,6 +2,7 @@ const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
 const Email = require('../utils/email');
 const jwt = require('jsonwebtoken');
+const AppError = require('../utils/appError');
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
@@ -45,6 +46,25 @@ exports.signup = catchAsync(async (req, res, next) => {
   const url = `${req.protocol}://${req.get('host')}/me`;
 
   await new Email(user, url).sendWelcomeEmail();
+
+  createAndSendToken(user, 200, res);
+});
+
+exports.login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  // Check if there's email & password
+  if (!email || !password)
+    return next(new AppError('الرجاء إدخال كلمة المرور وإسم المستخدم', 400));
+
+  // Check if there's a user with the provided email address
+  const user = await User.findOne({ email }).select(['+password']);
+
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(
+      new AppError('خطأ في عنوان البريد الإلكتروني او كلمة المرور', 401)
+    );
+  }
 
   createAndSendToken(user, 200, res);
 });

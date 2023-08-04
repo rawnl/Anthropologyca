@@ -61,7 +61,9 @@ const userSchema = mongoose.Schema({
   },
 });
 
-//  Document middleware => hashing the password before saving it
+//  1. Document middlewares
+
+//  1.1. Hashing the password before saving it
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
@@ -72,6 +74,7 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// 1.2. Setting up the passwordChangedAt field if password has changed
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || this.isNew) return next();
 
@@ -79,6 +82,20 @@ userSchema.pre('save', async function (next) {
 
   next();
 });
+
+// 2. Query Middleware
+
+// 2.1. Retrieving only active accounts
+userSchema.pre(/^find/, function () {
+  this.find({ active: { $ne: false } });
+});
+
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
 
 const User = mongoose.model('User', userSchema);
 
