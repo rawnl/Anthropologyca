@@ -26,6 +26,6 @@ tagSchema.pre('save', function (next) {
   next();
 });
 
-const Tag = mongoose.Model('Tag', tagSchema);
+const Tag = mongoose.model('Tag', tagSchema);
 
 module.exports = Tag;

@@ -1,0 +1,17 @@
+extends emailBase 
+
+block content 
+    p عزيزي (تي) #{name}، 
+        p مرحبا بك معنا في مدونة أنثروبولوجيكا
+        p نود إخبارك أنه قد تم إنشاء حسابك على موقعنا وهو الآن قيد الدراسة 
+        p في انتظار انتهاء تأكيد حسابك من طرف فرق العمل بإمكانك تسجيل الدخول وتصفح المقالات المنشورة
+        table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+                tr
+                    td(align='left')
+                        table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+                            tbody
+                                tr
+                                    td
+                                        a(href=`${url}`, target='_blank') تسجيل الدخول
+
