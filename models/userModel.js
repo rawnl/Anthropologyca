@@ -98,6 +98,17 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
+userSchema.methods.passwordHasChanged = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedAtTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return changedAtTimestamp > JWTTimestamp;
+  }
+  return false;
+};
+
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
