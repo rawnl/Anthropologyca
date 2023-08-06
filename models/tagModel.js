@@ -5,11 +5,11 @@ const slugify = require('slugify');
 const tagSchema = mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'الوسام يجب أن يتضمن إسم'],
+    required: [true, 'A tag must have a name'],
     unique: true,
     validate: [
       validator.isAlpha(str[(locale = 'ar')]),
-      'إسم الوسام يجب أن يكون باللغة العربية',
+      'Tag name should be in arabic',
     ],
   },
   slug: String,

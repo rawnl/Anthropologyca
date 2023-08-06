@@ -4,27 +4,27 @@ const slugify = require('slugify');
 const postSchema = mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'المقال يجب أن يحتوي على عنوان'],
+    required: [true, 'A post should have a title'],
     unique: true,
     trim: true,
-    maxLength: [70, 'عنوان المقال لا يجب أن يتعدى 70 حرفا'],
-    minLength: [20, 'عنوان المقال يجب أن لا يقل عن 20 حروف'],
+    maxLength: [70, 'Title must be less than 70 caracters'],
+    minLength: [20, 'Title must be more than 20 caracters'],
   },
   slug: String,
   coverImage: {
     type: String,
-    required: [true, 'الرجاء تحميل صورة للمقال'],
+    required: [true, 'Please upload a post image'],
   },
   body: {
     type: String,
     trim: true,
-    required: [true, 'الرجاء إضافة نص المقال'],
-    minLength: [1500, 'نص المقال يجب أن لا يقل عن 1500 حرف'],
+    required: [true, 'A post must have a body'],
+    minLength: [1500, 'A post must contain at least of 1500 caracters'],
   },
   tags: [mongoose.Schema.Types.ObjectId],
   summary: {
     type: String,
-    required: [true, 'المقال يجب أن يحتوي على ملخص'],
+    required: [true, 'A post must have a summary'],
   },
   createdAt: {
     type: Date,

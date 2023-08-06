@@ -55,15 +55,13 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // Check if there's email & password
   if (!email || !password)
-    return next(new AppError('الرجاء إدخال كلمة المرور وإسم المستخدم', 400));
+    return next(new AppError('Please provide e-mail and password', 400));
 
   // Check if there's a user with the provided email address
   const user = await User.findOne({ email }).select(['+password']);
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(
-      new AppError('خطأ في عنوان البريد الإلكتروني او كلمة المرور', 401)
-    );
+    return next(new AppError('Invalid e-mail or password', 401));
   }
 
   createAndSendToken(user, 200, res);

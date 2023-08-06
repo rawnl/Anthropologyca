@@ -5,13 +5,13 @@ const bcrypt = require('bcrypt');
 const userSchema = mongoose.Schema({
   name: {
     type: String,
-    required: [true, ' الرجاء إدخال الإسم واللقب'],
+    required: [true, 'A user must have a name'],
   },
   email: {
     type: String,
-    required: [true, 'الرجاء إدخال بريدك الإلكتروني'],
+    required: [true, 'A user must have an e-mail address'],
     unique: true,
-    validate: [validator.isEmail, 'الرجاء إدخال عنوان بريد إلكتروني صحيح'],
+    validate: [validator.isEmail, 'Please provide a valid e-mail address'],
   },
   photo: {
     type: String,
@@ -24,18 +24,18 @@ const userSchema = mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'الرجاء إدخال كلمة المرور'],
+    required: [true, 'A user must have a password'],
     minLength: 8,
     select: false,
   },
   passwordConfirm: {
     type: String,
-    required: [true, 'الرجاء تأكيد كلمة المرور'],
+    required: [true, 'Please confirm the password'],
     validate: {
       validator: function (el) {
         return el === this.password;
       },
-      message: 'كلمات المرور غير متطابقة',
+      message: 'Passwords does not match',
     },
   },
   passwordChangedAt: Date,
@@ -48,7 +48,7 @@ const userSchema = mongoose.Schema({
   },
   bio: {
     type: String,
-    maxLength: [150, 'هذا الحقل لا يجب أن يتعدى 150 حرفا'],
+    maxLength: [150, 'Bio field should contain less than 150 caracters'],
   },
   verified: {
     type: Boolean,
