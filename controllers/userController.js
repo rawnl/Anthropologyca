@@ -3,6 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
 const multer = require('multer');
 const sharp = require('sharp');
+const factory = require('./handlerFactory');
 
 const filterObj = (obj, ...allowedFields) => {
   const filteredObj = {};
@@ -44,6 +45,11 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
   next();
 });
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
 exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {
     return next(new AppError('This route is not for password updates.', 400));
@@ -64,3 +70,5 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.getUser = factory.getOne(User);
