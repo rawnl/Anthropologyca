@@ -56,4 +56,11 @@ module.exports = class Email {
   async sendWelcomeEmail() {
     await this.sendEmail('welcome', 'مرحبا بك في مجتمع أنثروبولوجيكا');
   }
+
+  async sendPasswordReset() {
+    await this.sendEmail(
+      'passwordReset',
+      'طلب تغيير كلمة المرور - أنثروبولوجيكا'
+    );
+  }
 };

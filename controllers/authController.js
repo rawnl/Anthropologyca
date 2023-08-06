@@ -3,6 +3,7 @@ const User = require('../models/userModel');
 const Email = require('../utils/email');
 const jwt = require('jsonwebtoken');
 const AppError = require('../utils/appError');
+const crypto = require('crypto');
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
@@ -77,3 +78,67 @@ exports.logout = (req, res) => {
     status: 'success',
   });
 };
+
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return next(new AppError('No user found with this e-mail address', 404));
+  }
+
+  const resetToken = user.createPasswordResetToken();
+
+  await user.save({ validateBeforeSave: false });
+
+  try {
+    const resetUrl = `${req.protocol}://${req.get(
+      'host'
+    )}/resetPassword/${resetToken}`;
+
+    await new Email(user, resetUrl).sendPasswordReset();
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to e-mail',
+    });
+  } catch (err) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    console.log(err);
+    console.log(err.message);
+
+    return next(
+      new AppError(
+        'There was an error sending the e-mail. Please try again later',
+        500
+      )
+    );
+  }
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new AppError('Token is invalid or expired', 404));
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+
+  await user.save();
+
+  createAndSendToken(user, 200, res);
+});
