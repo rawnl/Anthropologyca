@@ -24,9 +24,10 @@ router.patch(
 );
 router.delete('/deleteMe', userController.deleteMe);
 
-// Restricted Routes
-router.use(authController.restrictTo('admin', 'moderator'));
+// Restricted Routes - Admin
+router.use(authController.restrictTo('admin'));
 
 router.get('/', userController.getAllUsers);
+router.get('/:id', userController.getUser);
 
 module.exports = router;
