@@ -2,22 +2,13 @@ const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
-exports.getAll = (Model) =>
+exports.createOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    let filter = {};
-    if (req.params.postId) filter = { post: req.params.postId };
-
-    const features = new APIFeatures(Model.find(filter), req.query).filter();
-
-    const docs = await features.query;
+    const doc = await Model.create(req.body);
 
     res.status(200).json({
       status: 'success',
-      requestedAt: new Date(),
-      results: docs.length,
-      data: {
-        docs,
-      },
+      data: { data: doc },
     });
   });
 
@@ -71,5 +62,24 @@ exports.deleteOne = (Model) =>
     res.status(200).json({
       status: 'success',
       data: null,
+    });
+  });
+
+exports.getAll = (Model) =>
+  catchAsync(async (req, res, next) => {
+    let filter = {};
+    if (req.params.postId) filter = { post: req.params.postId };
+
+    const features = new APIFeatures(Model.find(filter), req.query).filter();
+
+    const docs = await features.query;
+
+    res.status(200).json({
+      status: 'success',
+      requestedAt: new Date(),
+      results: docs.length,
+      data: {
+        docs,
+      },
     });
   });
