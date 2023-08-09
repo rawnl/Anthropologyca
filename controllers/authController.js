@@ -156,6 +156,33 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   createAndSendToken(user, 200, res);
 });
 
+exports.isLoggedIn = async (req, res, next) => {
+  if (req.cookies.jwt) {
+    try {
+      const decoded = await promisify(jwt.verify)(
+        req.cookies.jwt,
+        process.env.JWT_SECRET_KEY
+      );
+
+      const currentUser = await User.findById(decoded.id);
+
+      if (!currentUser) {
+        return next();
+      }
+
+      if (currentUser.passwordHasChanged(decoded.iat)) {
+        return next();
+      }
+
+      res.locals.user = currentUser;
+      return next();
+    } catch (err) {
+      return next();
+    }
+  }
+  next();
+};
+
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
   if (
@@ -197,3 +224,14 @@ exports.protect = catchAsync(async (req, res, next) => {
   res.locals.user = currentUser;
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('You are not authorized to perform this action', 403)
+      );
+    }
+    next();
+  };
+};

@@ -11,6 +11,7 @@ router.get('/logout', authController.logout);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
+// Protected routes
 router.use(authController.protect);
 
 router.get('/me', userController.getMe, userController.getUser);
@@ -21,6 +22,10 @@ router.patch(
   userController.resizeUserPhoto,
   userController.updateMe
 );
-// router.get('/', userController.getAllUsers);
+
+// Restricted Routes
+router.use(authController.restrictTo('admin', 'moderator'));
+
+router.get('/', userController.getAllUsers);
 
 module.exports = router;

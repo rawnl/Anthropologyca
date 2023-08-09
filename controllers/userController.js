@@ -72,3 +72,4 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.getUser = factory.getOne(User);
+exports.getAllUsers = factory.getAll(User);
