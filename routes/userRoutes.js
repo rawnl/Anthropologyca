@@ -22,6 +22,7 @@ router.patch(
   userController.resizeUserPhoto,
   userController.updateMe
 );
+router.delete('/deleteMe', userController.deleteMe);
 
 // Restricted Routes
 router.use(authController.restrictTo('admin', 'moderator'));
