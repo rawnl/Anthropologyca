@@ -41,4 +41,21 @@ exports.getOne = (Model, popOptions) =>
     });
   });
 
-exports.updateOne = catchAsync(async (req, res, next) => {});
+exports.updateOne = (Model) =>
+  catchAsync(async (req, res, next) => {
+    const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidator: true,
+    });
+
+    if (!doc) {
+      return next(new AppError('No document found to be updated', 404));
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        doc,
+      },
+    });
+  });

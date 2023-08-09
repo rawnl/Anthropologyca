@@ -28,6 +28,9 @@ router.delete('/deleteMe', userController.deleteMe);
 router.use(authController.restrictTo('admin'));
 
 router.get('/', userController.getAllUsers);
-router.get('/:id', userController.getUser);
+router
+  .route('/:id')
+  .get(userController.getUser)
+  .patch(userController.updateUser);
 
 module.exports = router;
