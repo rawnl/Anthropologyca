@@ -4,10 +4,12 @@ const commentSchema = mongoose.Schema({
   post: {
     type: mongoose.Schema.ObjectId,
     ref: 'Post',
+    required: [true, 'A comment should belong to a post'],
   },
   user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
+    required: [true, 'A comment should belong to created by a user'],
   },
   comment: {
     type: String,
