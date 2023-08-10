@@ -4,6 +4,8 @@ const authController = require('../controllers/authController');
 
 const router = express.Router();
 
+router.route('/post/:slug').get(postController.getPostBySlug);
+
 router
   .route('/')
   .get(postController.getAllPosts)
@@ -14,19 +16,13 @@ router
     postController.createPost
   );
 
+router.use(authController.protect);
+router.use(authController.restrictTo('admin', 'moderator'));
+
 router
   .route('/:id')
   .get(postController.getPost)
-  .patch(
-    authController.protect,
-    authController.restrictTo('admin', 'moderator'),
-    postController.setPostSlug,
-    postController.updatePost
-  )
-  .delete(
-    authController.protect,
-    authController.restrictTo('admin', 'moderator'),
-    postController.deletePost
-  );
+  .patch(postController.setPostSlug, postController.updatePost)
+  .delete(postController.deletePost);
 
 module.exports = router;

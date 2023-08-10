@@ -88,13 +88,6 @@ postSchema.pre('save', function (next) {
   next();
 });
 
-postSchema.pre(/^findByIdAndUpdate/, function (next) {
-  //if (this.isModified('title'))
-  console.log('calllllllllllllllllllled');
-  this.slug = slugify(this.title, { trim: true });
-  next();
-});
-
 // postSchema.pre(/^find/, function (next) {
 //   this.find({ state: { $eq: 'approved' } });
 //   next();

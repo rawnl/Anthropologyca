@@ -13,6 +13,27 @@ exports.setPostSlug = (req, res, next) => {
   next();
 };
 
+exports.getPostBySlug = catchAsync(async (req, res, next) => {
+  let query = Post.find({ slug: { $eq: req.params.slug } });
+  // .populate({
+  //   path: 'comments',
+  //   select: ['user', 'comment', 'createdAt'],
+  // });
+
+  const doc = await query;
+
+  if (!doc) {
+    return next(new AppError('No document found.', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: doc,
+    },
+  });
+});
+
 exports.createPost = factory.createOne(Post);
 exports.getPost = factory.getOne(Post);
 exports.updatePost = factory.updateOne(Post);
