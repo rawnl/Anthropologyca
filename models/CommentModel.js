@@ -1,17 +1,17 @@
 const mongoose = require('mongoose');
 
 const commentSchema = mongoose.Schema({
-  postId: {
+  post: {
     type: mongoose.Schema.ObjectId,
     ref: 'Post',
   },
-  userId: {
+  user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
   },
-  content: {
+  comment: {
     type: String,
-    required: [true, ''],
+    required: [true, `Comment should not be empty`],
   },
   createdAt: {
     type: Date,
