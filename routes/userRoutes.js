@@ -25,7 +25,7 @@ router.patch(
 router.delete('/deleteMe', userController.deleteMe);
 
 // Restricted Routes - Admin
-router.use(authController.restrictTo('admin'));
+router.use(authController.restrictTo('moderator', 'admin'));
 
 router
   .route('/')

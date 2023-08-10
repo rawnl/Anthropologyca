@@ -65,14 +65,18 @@ exports.deleteOne = (Model) =>
     });
   });
 
-exports.getAll = (Model) =>
+exports.getAll = (Model, type) =>
   catchAsync(async (req, res, next) => {
     let filter = {};
     if (req.params.postId) filter = { post: req.params.postId };
 
     const features = new APIFeatures(Model.find(filter), req.query).filter();
 
-    const docs = await features.query;
+    let docs = await features.query;
+
+    // Testing if the user is admin / moderator
+    if (req.user.role === 'moderator')
+      docs = docs.filter((el) => el.role === 'user');
 
     res.status(200).json({
       status: 'success',
