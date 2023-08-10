@@ -14,7 +14,7 @@ const postSchema = mongoose.Schema(
     slug: String,
     coverImage: {
       type: String,
-      required: [true, 'Please upload a post image'],
+      //required: [true, 'Please upload a post image'],
     },
     body: {
       type: String,
@@ -35,13 +35,14 @@ const postSchema = mongoose.Schema(
     state: {
       type: String,
       enum: ['approved', 'rejected', 'under-review'],
-      select: false,
+      default: 'under-review',
     },
     publishedAt: Date,
     updatedAt: Date,
     author: {
       type: mongoose.Schema.ObjectId,
       ref: 'User',
+      required: [true, 'A post must have an author'],
     },
     likesCounter: {
       type: Number,
@@ -66,16 +67,16 @@ const postSchema = mongoose.Schema(
   }
 );
 
-tourSchema.index({ publishedAt: 1, downloadCounter: 1 });
-tourSchema.index({ slug: 1 });
+postSchema.index({ publishedAt: 1, downloadCounter: 1 });
+postSchema.index({ slug: 1 });
 
-tourSchema.virtuals('comments', {
+postSchema.virtual('comments', {
   ref: 'Comment',
   foreignField: 'post',
   localField: '_id',
 });
 
-tourSchema.virtuals('likes', {
+postSchema.virtual('likes', {
   ref: 'Like',
   foreignField: 'post',
   localField: '_id',
@@ -87,10 +88,17 @@ postSchema.pre('save', function (next) {
   next();
 });
 
-postSchema.pre(/^find/, function (next) {
-  this.find({ state: { $e: 'approved' } });
+postSchema.pre(/^findByIdAndUpdate/, function (next) {
+  //if (this.isModified('title'))
+  console.log('calllllllllllllllllllled');
+  this.slug = slugify(this.title, { trim: true });
   next();
 });
+
+// postSchema.pre(/^find/, function (next) {
+//   this.find({ state: { $eq: 'approved' } });
+//   next();
+// });
 
 postSchema.pre(/^find/, function (next) {
   this.populate({
@@ -102,7 +110,7 @@ postSchema.pre(/^find/, function (next) {
 
 postSchema.pre('aggregate', function (next) {
   this.pipeline().push({
-    $match: { state: { $e: 'approved' } },
+    $match: { state: { $eq: 'approved' } },
   });
   next();
 });

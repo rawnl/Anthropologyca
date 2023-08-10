@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const userRouter = require('./routes/userRoutes');
+const postRouter = require('./routes/postRoutes');
 
 const app = express();
 
@@ -11,13 +12,8 @@ app.use(
   })
 );
 
-// 1. Middlewares
-app.use((req, res, next) => {
-  console.log('This is a middleware');
-  next();
-});
-
-// 2. Routes
+// Routes
 app.use('/users', userRouter);
+app.use('/posts', postRouter);
 
 module.exports = app;
