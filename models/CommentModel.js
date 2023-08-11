@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Post = require('../models/postModel');
 
 const commentSchema = mongoose.Schema({
   post: {
@@ -24,6 +25,25 @@ const commentSchema = mongoose.Schema({
     default: false,
     select: false,
   },
+});
+
+commentSchema.pre('save', async function (next) {
+  await Post.increaseCounter(this.post, 'commentsCounter');
+  next();
+});
+
+commentSchema.pre('findOneAndDelete', async function (next) {
+  const comment = await Comment.findById(this.getQuery()._id);
+  await Post.decreaseCounter(comment.post, 'commentsCounter');
+  next();
+});
+
+commentSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'user',
+    select: 'name photo',
+  });
+  next();
 });
 
 const Comment = mongoose.model('Comment', commentSchema);

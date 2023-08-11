@@ -108,6 +108,32 @@ postSchema.pre('aggregate', function (next) {
   next();
 });
 
+postSchema.statics.increaseCounter = async function (postId, counter) {
+  const post = await Post.findById(postId);
+  if (counter === 'likesCounter')
+    await Post.findByIdAndUpdate(postId, {
+      likesCounter: post.likesCounter + 1,
+    });
+  if (counter === 'commentsCounter') {
+    console.log(post.commentsCounter);
+    await Post.findByIdAndUpdate(postId, {
+      commentsCounter: post.commentsCounter * 1 + 1,
+    });
+  }
+};
+
+postSchema.statics.decreaseCounter = async function (postId, counter) {
+  const post = await Post.findOne({ _id: postId });
+  if (counter === 'likesCounter')
+    await Post.findByIdAndUpdate(postId, {
+      likesCounter: post.likesCounter - 1,
+    });
+  if (counter === 'commentsCounter')
+    await Post.findByIdAndUpdate(postId, {
+      commentsCounter: post.commentsCounter - 1,
+    });
+};
+
 const Post = mongoose.model('Post', postSchema);
 
 module.exports = Post;

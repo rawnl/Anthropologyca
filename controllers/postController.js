@@ -2,6 +2,7 @@ const Post = require('../models/postModel');
 const factory = require('../controllers/handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const slugify = require('slugify');
+const Comment = require('../models/CommentModel');
 
 exports.setAuthor = (req, res, next) => {
   req.body.author = req.user.id;

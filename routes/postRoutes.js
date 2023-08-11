@@ -1,6 +1,7 @@
 const express = require('express');
 const postController = require('../controllers/postController');
 const authController = require('../controllers/authController');
+const commentController = require('../controllers/commentController');
 
 const router = express.Router();
 
@@ -23,6 +24,6 @@ router
   .route('/:id')
   .get(postController.getPost)
   .patch(postController.setPostSlug, postController.updatePost)
-  .delete(postController.deletePost);
+  .delete(commentController.deleteRelatedComments, postController.deletePost);
 
 module.exports = router;
