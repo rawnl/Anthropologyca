@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const userRouter = require('./routes/userRoutes');
 const postRouter = require('./routes/postRoutes');
 const commentRouter = require('./routes/commentRoutes');
+const likeRouter = require('./routes/likeRoutes');
 
 const app = express();
 
@@ -17,5 +18,6 @@ app.use(
 app.use('/users', userRouter);
 app.use('/posts', postRouter);
 app.use('/comments', commentRouter);
+app.use('/likes', likeRouter);
 
 module.exports = app;

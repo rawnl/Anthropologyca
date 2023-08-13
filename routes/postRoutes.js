@@ -2,12 +2,14 @@ const express = require('express');
 const postController = require('../controllers/postController');
 const authController = require('../controllers/authController');
 const commentController = require('../controllers/commentController');
-const commentRouter = require('../routes/commentRoutes');
+const commentRouter = require('./commentRoutes');
+const likeRouter = require('./likeRoutes');
 
 const router = express.Router();
 
 // Need to be tested
-router.use('/:id/comments', commentRouter);
+router.use('/:PostId/comments', commentRouter);
+router.use('/:PostId/likes', likeRouter);
 
 router
   .route('/')

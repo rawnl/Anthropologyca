@@ -1,10 +1,10 @@
 const Post = require('../models/postModel');
 const factory = require('../controllers/handlerFactory');
 const catchAsync = require('../utils/catchAsync');
-// const slugify = require('slugify');
 const arslugify = require('arslugify');
-const Comment = require('../models/CommentModel');
+// const Comment = require('../models/CommentModel');
 const AppError = require('../utils/appError');
+const Like = require('../models/likeModel');
 
 exports.setAuthor = (req, res, next) => {
   req.body.author = req.user.id;
@@ -48,7 +48,10 @@ exports.getUserPosts = catchAsync(async (req, res, next) => {
 });
 
 exports.getUserFavoritePosts = catchAsync(async (req, res, next) => {
-  const posts = await Post.find({ user: req.user.id });
+  let likedPosts = await Like.find({ user: req.user.id }).select('post');
+  likedPosts = likedPosts.map((el) => el.post);
+
+  const posts = await Post.find({ _id: { $in: likedPosts } });
 
   res.status(200).json({
     status: 'success',

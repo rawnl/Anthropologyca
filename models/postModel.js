@@ -8,8 +8,7 @@ const postSchema = mongoose.Schema(
       required: [true, 'A post should have a title'],
       unique: true,
       trim: true,
-      maxLength: [70, 'Title must be less than 70 caracters'],
-      minLength: [20, 'Title must be more than 20 caracters'],
+      maxLength: [120, 'Title must be less than 70 caracters'],
     },
     slug: String,
     coverImage: {

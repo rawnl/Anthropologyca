@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Post = require('./postModel');
 
 const likeSchema = mongoose.Schema({
   post: {
@@ -11,8 +12,21 @@ const likeSchema = mongoose.Schema({
   },
   isLiked: {
     type: Boolean,
-    default: false,
+    default: true,
   },
+});
+
+likeSchema.index({ user: 1, post: 1 }, { unique: true });
+
+likeSchema.pre('save', async function (next) {
+  await Post.increaseCounter(this.post, 'likesCounter');
+  next();
+});
+
+likeSchema.pre('findOneAndDelete', async function (next) {
+  const like = await Like.findById(this.getQuery()._id);
+  await Post.decreaseCounter(like.post, 'likesCounter');
+  next();
 });
 
 const Like = mongoose.model('Like', likeSchema);
