@@ -1,6 +1,7 @@
 const express = require('express');
 const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
+const postController = require('../controllers/postController');
 
 const router = express.Router();
 
@@ -24,13 +25,18 @@ router.patch(
 );
 router.delete('/deleteMe', userController.deleteMe);
 
-// Restricted Routes - Admin
+router.get('/my-favorite-posts', postController.getUserFavoritePosts);
+
+// Restricted Routes - Admins & Moderators
 router.use(authController.restrictTo('moderator', 'admin'));
 
 router
   .route('/')
   .get(userController.getAllUsers)
   .post(userController.createUser);
+
+router.get('/my-posts', postController.getUserPosts);
+
 router
   .route('/:id')
   .get(userController.getUser)

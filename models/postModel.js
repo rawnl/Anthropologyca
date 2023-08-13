@@ -84,7 +84,14 @@ postSchema.virtual('likes', {
 
 // Document middleware => save slug
 postSchema.pre('save', function (next) {
-  this.slug = slugify(this.title, { trim: true });
+  this.slug = slugify(this.title, {
+    replacement: '-',
+    remove: undefined,
+    lower: true,
+    strict: true,
+    locale: 'ar',
+    trim: true,
+  });
   next();
 });
 

@@ -9,19 +9,12 @@ router.use(authController.protect);
 router
   .route('/')
   .get(commentController.getAllComments)
-  .post(
-    authController.restrictTo('user'),
-    commentController.setUserPostIds,
-    commentController.createComment
-  );
+  .post(commentController.setUserPostIds, commentController.createComment);
 
 router
   .route('/:id')
   .get(commentController.getComment)
-  .patch(authController.restrictTo('user'), commentController.updateComment)
-  .delete(
-    authController.restrictTo('user', 'admin'),
-    commentController.deleteComment
-  );
+  .patch(commentController.updateComment)
+  .delete(commentController.deleteComment);
 
 module.exports = router;
