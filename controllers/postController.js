@@ -1,7 +1,8 @@
 const Post = require('../models/postModel');
 const factory = require('../controllers/handlerFactory');
 const catchAsync = require('../utils/catchAsync');
-const slugify = require('slugify');
+// const slugify = require('slugify');
+const arslugify = require('arslugify');
 const Comment = require('../models/CommentModel');
 const AppError = require('../utils/appError');
 
@@ -11,15 +12,7 @@ exports.setAuthor = (req, res, next) => {
 };
 
 exports.setPostSlug = (req, res, next) => {
-  if (req.body.title)
-    req.body.slug = slugify(req.body.title, {
-      replacement: '-',
-      remove: undefined,
-      lower: true,
-      strict: true,
-      locale: 'ar',
-      trim: true,
-    });
+  if (req.body.title) req.body.slug = arslugify(req.body.title);
   next();
 };
 

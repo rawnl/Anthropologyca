@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const slugify = require('slugify');
+const arslugify = require('arslugify');
 
 const postSchema = mongoose.Schema(
   {
@@ -82,16 +82,8 @@ postSchema.virtual('likes', {
   localField: '_id',
 });
 
-// Document middleware => save slug
 postSchema.pre('save', function (next) {
-  this.slug = slugify(this.title, {
-    replacement: '-',
-    remove: undefined,
-    lower: true,
-    strict: true,
-    locale: 'ar',
-    trim: true,
-  });
+  this.slug = arslugify(this.title);
   next();
 });
 
