@@ -27,15 +27,16 @@ router.delete('/deleteMe', userController.deleteMe);
 
 router.get('/my-favorite-posts', postController.getUserFavoritePosts);
 
-// Restricted Routes - Admins & Moderators
-router.use(authController.restrictTo('moderator', 'admin'));
+router.get(
+  '/my-posts',
+  authController.restrictTo('admin', 'moderator'),
+  postController.getUserPosts
+);
 
-router
-  .route('/')
-  .get(userController.getAllUsers)
-  .post(userController.createUser);
+// Restricted Routes - Admins
+router.use(authController.restrictTo('admin'));
 
-router.get('/my-posts', postController.getUserPosts);
+router.route('/').get(userController.getAllUsers);
 
 router
   .route('/:id')

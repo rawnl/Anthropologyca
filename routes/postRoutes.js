@@ -13,7 +13,7 @@ router.use('/:PostId/likes', likeRouter);
 
 router
   .route('/')
-  .get(postController.getAllPosts)
+  .get(authController.protect, postController.getAllPosts)
   .post(
     authController.protect,
     authController.restrictTo('moderator', 'admin'),

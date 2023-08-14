@@ -1,10 +1,15 @@
 const Post = require('../models/postModel');
-const factory = require('../controllers/handlerFactory');
+const {
+  createOne,
+  getOne,
+  updateOne,
+  deleteOne,
+} = require('../controllers/handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const arslugify = require('arslugify');
-// const Comment = require('../models/CommentModel');
 const AppError = require('../utils/appError');
 const Like = require('../models/likeModel');
+const APIFeatures = require('../utils/apiFeatures');
 
 exports.setAuthor = (req, res, next) => {
   req.body.author = req.user.id;
@@ -59,8 +64,30 @@ exports.getUserFavoritePosts = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createPost = factory.createOne(Post);
-exports.getPost = factory.getOne(Post);
-exports.updatePost = factory.updateOne(Post);
-exports.deletePost = factory.deleteOne(Post);
-exports.getAllPosts = factory.getAll(Post, false);
+exports.getAllPosts = catchAsync(async (req, res, next) => {
+  let filter = {};
+  if (req.user.role !== 'admin') {
+    filter = { state: { $eq: 'approved' } };
+  }
+  const features = new APIFeatures(Model.find(filter), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  let docs = await features.query;
+
+  res.status(200).json({
+    status: 'success',
+    requestedAt: new Date(),
+    results: docs.length,
+    data: {
+      docs,
+    },
+  });
+});
+
+exports.createPost = createOne(Post);
+exports.getPost = getOne(Post);
+exports.updatePost = updateOne(Post);
+exports.deletePost = deleteOne(Post);

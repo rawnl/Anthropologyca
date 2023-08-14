@@ -65,10 +65,11 @@ exports.deleteOne = (Model) =>
     });
   });
 
-exports.getAll = (Model, approved) =>
+exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
     let filter = {};
-    if (approved) filter = { state: { $eq: 'approved' } };
+
+    // For comments
     if (req.params.postId) filter = { post: req.params.postId };
 
     const features = new APIFeatures(Model.find(filter), req.query)
