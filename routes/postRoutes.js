@@ -9,8 +9,8 @@ const likeRouter = require('./likeRoutes');
 const router = express.Router();
 
 // Need to be tested
-router.use('/:PostId/comments', commentRouter);
-router.use('/:PostId/likes', likeRouter);
+router.use('/:postId/comments', commentRouter);
+router.use('/:postId/likes', likeRouter);
 
 router
   .route('/')
