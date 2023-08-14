@@ -3,6 +3,7 @@ const postController = require('../controllers/postController');
 const authController = require('../controllers/authController');
 const commentController = require('../controllers/commentController');
 const commentRouter = require('./commentRoutes');
+const likeController = require('../controllers/likeController');
 const likeRouter = require('./likeRoutes');
 
 const router = express.Router();
@@ -21,7 +22,9 @@ router
     postController.createPost
   );
 
-router.route('/:slug').get(postController.getPostBySlug);
+router
+  .route('/:slug')
+  .get(authController.protect, postController.getPostBySlug);
 
 router.use(authController.protect);
 router.use(authController.restrictTo('admin', 'moderator'));
@@ -29,7 +32,16 @@ router.use(authController.restrictTo('admin', 'moderator'));
 router
   .route('/post/:id')
   .get(postController.getPost)
-  .patch(postController.setPostSlug, postController.updatePost)
-  .delete(commentController.deleteRelatedComments, postController.deletePost);
+  .patch(
+    postController.isAuthorized,
+    postController.setPostSlug,
+    postController.updatePost
+  )
+  .delete(
+    postController.isAuthorized,
+    commentController.deleteRelatedComments,
+    likeController.deleteRelatedLikes,
+    postController.deletePost
+  );
 
 module.exports = router;

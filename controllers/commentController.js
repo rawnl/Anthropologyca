@@ -7,11 +7,10 @@ exports.setUserPostIds = (req, res, next) => {
   next();
 };
 
-exports.deleteRelatedComments = async(req,res,next)=> {
-  await Comment.deleteMany({post: {$eq: req.params.id}});
-  console.log('all related comments have been deleted')
+exports.deleteRelatedComments = async (req, res, next) => {
+  await Comment.deleteMany({ post: { $eq: req.params.id } });
   next();
-}
+};
 
 exports.createComment = factory.createOne(Comment);
 exports.getComment = factory.getOne(Comment);

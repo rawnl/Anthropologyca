@@ -21,8 +21,17 @@ exports.setPostSlug = (req, res, next) => {
   next();
 };
 
+exports.isAuthorized = catchAsync(async (req, re, next) => {
+  const post = await Post.findById(req.params.id);
+  if (post.author !== req.user.id && req.user.role !== 'admin')
+    return next(
+      new AppError('You are not authorized to perform this action', 403)
+    );
+  next();
+});
+
 exports.getPostBySlug = catchAsync(async (req, res, next) => {
-  let query = Post.find({ slug: { $eq: req.params.slug } }).populate({
+  let query = Post.findOne({ slug: { $eq: req.params.slug } }).populate({
     path: 'comments',
     select: ['user', 'comment', 'createdAt'],
   });
@@ -31,6 +40,10 @@ exports.getPostBySlug = catchAsync(async (req, res, next) => {
 
   if (!doc) {
     return next(new AppError('No document found.', 404));
+  }
+
+  if (doc.author !== req.user.id) {
+    await Post.increaseCounter(doc.id, 'viewsCounter');
   }
 
   res.status(200).json({

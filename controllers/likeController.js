@@ -7,6 +7,11 @@ exports.setUserPostIds = (req, res, next) => {
   next();
 };
 
+exports.deleteRelatedLikes = async (req, res, next) => {
+  await Like.deleteMany({ post: { $eq: req.params.id } });
+  next();
+};
+
 exports.likePost = createOne(Like);
 exports.unlikePost = deleteOne(Like);
 // exports.getLikes = factory.getAll(Like);
