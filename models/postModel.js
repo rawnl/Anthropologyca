@@ -13,7 +13,7 @@ const postSchema = mongoose.Schema(
     slug: String,
     coverImage: {
       type: String,
-      //required: [true, 'Please upload a post image'],
+      required: [true, 'Please upload a post image'],
     },
     body: {
       type: String,

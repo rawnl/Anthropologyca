@@ -18,6 +18,8 @@ router
   .post(
     authController.protect,
     authController.restrictTo('moderator', 'admin'),
+    postController.uploadPostImage,
+    postController.resizePostImage,
     postController.setAuthor,
     postController.createPost
   );
@@ -34,6 +36,8 @@ router
   .get(postController.getPost)
   .patch(
     postController.isAuthorized,
+    postController.uploadPostImage,
+    postController.resizePostImage,
     postController.setPostSlug,
     postController.updatePost
   )

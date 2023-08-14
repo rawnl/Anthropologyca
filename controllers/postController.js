@@ -10,6 +10,41 @@ const arslugify = require('arslugify');
 const AppError = require('../utils/appError');
 const Like = require('../models/likeModel');
 const APIFeatures = require('../utils/apiFeatures');
+const multer = require('multer');
+const sharp = require('sharp');
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Please upload only images', 404), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadPostImage = upload.fields([{ name: 'coverImage', maxCount: 1 }]);
+
+exports.resizePostImage = catchAsync(async (req, res, next) => {
+  if (!req.files.coverImage) return next();
+
+  req.body.coverImage = `post-cover-${
+    req.params.id ? req.params.id : ''
+  }-${Date.now()}.jpeg`;
+
+  await sharp(req.files.coverImage[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/posts/${req.body.coverImage}`);
+
+  next();
+});
 
 exports.setAuthor = (req, res, next) => {
   req.body.author = req.user.id;
