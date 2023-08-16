@@ -10,7 +10,10 @@ const postSchema = mongoose.Schema(
       trim: true,
       maxLength: [120, 'Title must be less than 70 caracters'],
     },
-    slug: String,
+    slug: {
+      type: String,
+      unique: true,
+    },
     coverImage: {
       type: String,
       required: [true, 'Please upload a post image'],
@@ -86,16 +89,18 @@ postSchema.pre('save', function (next) {
   next();
 });
 
-// postSchema.pre(/^find/, function (next) {
-//   this.find({ state: { $eq: 'approved' } });
-//   next();
-// });
-
 postSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'author',
     select: '-__v -passwordChangetAt',
   });
+  next();
+});
+
+postSchema.pre('findOneAndUpdate', function (next) {
+  this.set({ updatedAt: Date.now() });
+  if (this._update.state && this._update.state === 'approved')
+    this.set({ publishedAt: Date.now() });
   next();
 });
 
