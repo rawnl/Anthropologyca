@@ -1,10 +1,5 @@
 const Post = require('../models/postModel');
-const {
-  createOne,
-  getOne,
-  updateOne,
-  deleteOne,
-} = require('../controllers/handlerFactory');
+const { createOne, getOne, updateOne, deleteOne } = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const arslugify = require('arslugify');
 const AppError = require('../utils/appError');
@@ -114,10 +109,10 @@ exports.getUserFavoritePosts = catchAsync(async (req, res, next) => {
 
 exports.getAllPosts = catchAsync(async (req, res, next) => {
   let filter = {};
-  if (req.user.role !== 'admin') {
-    filter = { state: { $eq: 'approved' } };
-  }
-  const features = new APIFeatures(Model.find(filter), req.query)
+  // if (req.user.role !== 'admin') {
+  //   filter = { state: { $eq: 'approved' } };
+  // }
+  const features = new APIFeatures(Post.find(filter), req.query)
     .filter()
     .sort()
     .limitFields()
