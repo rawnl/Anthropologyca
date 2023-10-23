@@ -8,8 +8,8 @@
     "start:dev": "nodemon server.js",
     "start:prod": "NODE_ENV=production nodemon server.js",
     "debug": "ndb server.js",
-    "watch": "parcel watch ./public/js/index.js --out public/js/bundle.js",
-    "build": "parcel build ./public/js/index.js --out public/js/bundle.js"
+    "watch": "parcel watch ./public/js/index.js",
+    "build": "parcel build ./public/js/index.js"
   },
   "repository": {
     "type": "git",
