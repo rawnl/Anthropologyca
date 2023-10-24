@@ -75,16 +75,19 @@ app.use(
 );
 
 app.use(compression());
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
+
 // Routes
-app.get('/', (req, res) => {
-  res.render('index');
-});
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/comments', commentRouter);
 app.use('/api/v1/likes', likeRouter);
+
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
+app.get('/', (req, res) => {
+  res.render('index');
+});
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
