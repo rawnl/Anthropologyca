@@ -74,8 +74,11 @@ app.use(
 );
 
 app.use(compression());
-
+app.set('view engine', 'pug');
 // Routes
+app.get('/', (req, res) => {
+  res.render('index');
+});
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/comments', commentRouter);
