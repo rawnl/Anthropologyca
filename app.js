@@ -9,6 +9,7 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 const compression = require('compression');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -74,6 +75,7 @@ app.use(
 );
 
 app.use(compression());
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 // Routes
 app.get('/', (req, res) => {
