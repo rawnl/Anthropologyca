@@ -12,6 +12,11 @@ const router = express.Router();
 router.use('/:postId/comments', commentRouter);
 router.use('/:postId/likes', likeRouter);
 
+router.route('/post-cover-image/:filename').get(postController.getPostImage);
+// router
+//   .route('/post-cover-image')
+//   .post(postController.uploadPostImage, postController.setImgURL);
+
 router
   .route('/')
   .get(postController.getAllPosts) //authController.protect,
@@ -19,7 +24,6 @@ router
     authController.protect,
     authController.restrictTo('moderator', 'admin'),
     postController.uploadPostImage,
-    postController.resizePostImage,
     postController.setAuthor,
     postController.createPost
   );
@@ -37,7 +41,7 @@ router
   .patch(
     postController.isAuthorized,
     postController.uploadPostImage,
-    postController.resizePostImage,
+    postController.deletePostImage,
     postController.setPostSlug,
     postController.updatePost
   )
@@ -45,6 +49,7 @@ router
     postController.isAuthorized,
     commentController.deleteRelatedComments,
     likeController.deleteRelatedLikes,
+    postController.deletePostImage,
     postController.deletePost
   );
 

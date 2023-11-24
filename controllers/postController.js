@@ -1,3 +1,6 @@
+const mongoose = require('mongoose');
+const crypto = require('crypto');
+const path = require('path');
 const Post = require('../models/postModel');
 const { createOne, getOne, updateOne, deleteOne } = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
@@ -6,9 +9,53 @@ const AppError = require('../utils/appError');
 const Like = require('../models/likeModel');
 const APIFeatures = require('../utils/apiFeatures');
 const multer = require('multer');
-const sharp = require('sharp');
 
-const multerStorage = multer.memoryStorage();
+const { GridFsStorage } = require('multer-gridfs-storage');
+const Grid = require('gridfs-stream');
+const stream = require('stream');
+
+const connection = mongoose.connection;
+
+// Create GridFS Stream
+let gfs, gridfsBucket;
+connection.once('open', () => {
+  gridfsBucket = new mongoose.mongo.GridFSBucket(connection.db, {
+    bucketName: 'uploads',
+  });
+  gfs = Grid(connection.db, mongoose.mongo);
+  gfs.collection('uploads');
+});
+// WORKS FINE - UPLOAD & DELETE (NB: 2 COPIES [0|....])
+const storage = new GridFsStorage({
+  url: connection.client.s.url,
+  file: (req, file) => {
+    return new Promise((resolve, reject) => {
+      crypto.randomBytes(16, (err, buff) => {
+        if (err) {
+          return reject(new AppError(err.message, 500));
+        }
+        const filename =
+          buff.toString('hex') + Date.now() + path.extname(file.originalname);
+
+        const uploadStream = gridfsBucket.openUploadStream({
+          filename: filename,
+          bucketName: 'uploads',
+        });
+
+        uploadStream.end(file.buffer);
+        uploadStream.once('finish', () => {
+          req.body.coverImage = uploadStream.filename.filename;
+          resolve({ filename: filename, bucketName: 'uploads' });
+        });
+
+        // Handle errors
+        uploadStream.on('error', (err) => {
+          return reject(new AppError(err.message, 500));
+        });
+      });
+    });
+  },
+});
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
@@ -19,24 +66,40 @@ const multerFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage: multerStorage,
+  storage: storage,
   fileFilter: multerFilter,
 });
 
 exports.uploadPostImage = upload.fields([{ name: 'coverImage', maxCount: 1 }]);
 
-exports.resizePostImage = catchAsync(async (req, res, next) => {
-  if (!req.files.coverImage) return next();
+exports.getPostImage = catchAsync(async (req, res, next) => {
+  const doc = await gfs.files.findOne({ filename: req.params.filename });
 
-  req.body.coverImage = `post-cover-${
-    req.params.id ? req.params.id : ''
-  }-${Date.now()}.jpeg`;
+  if (!doc) {
+    return next(new AppError('No document found.', 404));
+  }
 
-  await sharp(req.files.coverImage[0].buffer)
-    .resize(2000, 1333)
-    .toFormat('jpeg')
-    .jpeg({ quality: 90 })
-    .toFile(`public/img/posts/${req.body.coverImage}`);
+  const readstream = gridfsBucket.openDownloadStream(doc._id);
+
+  readstream.pipe(res);
+
+  readstream.on('error', (err) => {
+    return next(new AppError('Internal Server Error', 500));
+  });
+});
+
+exports.deletePostImage = catchAsync(async (req, res, next) => {
+  const post = await Post.findById(req.params.id);
+  const image = await gfs.files.findOne({ filename: post.coverImage });
+
+  if (!image) {
+    return next(new AppError('No document found.', 404));
+  }
+
+  gridfsBucket.delete(image._id, function (err) {
+    console.log(err);
+    return next(new AppError("Couldn't remove the file", 500));
+  });
 
   next();
 });

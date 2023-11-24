@@ -6,6 +6,27 @@ const AppError = require('../utils/appError');
 const crypto = require('crypto');
 const { promisify } = require('util');
 
+// NOTIFICATION SECTION
+let socket;
+
+exports.setSocket = function (socket) {
+  this.socket = socket;
+  // console.log('this.socket : ', this.socket);
+};
+
+exports.sendNotification = function (userId, message) {
+  console.log('called sendNotification');
+  console.log(userId);
+  console.log(message);
+  // Assuming userId is the unique identifier for the connected user
+  if (this.socket) {
+    console.log('inside if - sendNotification');
+    const msg = `@from SERVER : NOTIF -- ${message}`;
+    this.socket.emit('notification', { userId, msg });
+  }
+  console.log('outside if - sendNotification');
+};
+
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -65,6 +86,10 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Invalid e-mail or password', 401));
   }
+
+  // console.log('------------------------------------');
+  // sendNotification(user.id, '@server reported: successful login');
+  // console.log('------------------------------------');
 
   createAndSendToken(user, 200, res);
 });
