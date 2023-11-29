@@ -12,10 +12,11 @@ const router = express.Router();
 router.use('/:postId/comments', commentRouter);
 router.use('/:postId/likes', likeRouter);
 
-router.route('/post-cover-image/:filename').get(postController.getPostImage);
-// router
-//   .route('/post-cover-image')
-//   .post(postController.uploadPostImage, postController.setImgURL);
+router.route('/post-image/:filename').get(postController.getPostImage);
+
+router
+  .route('/post-image')
+  .post(postController.uploadPostImage, postController.setImgURL);
 
 router
   .route('/')

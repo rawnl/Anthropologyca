@@ -45,6 +45,9 @@ const storage = new GridFsStorage({
         uploadStream.end(file.buffer);
         uploadStream.once('finish', () => {
           req.body.coverImage = uploadStream.filename.filename;
+          // For other images :
+          // req.body.filename = uploadStream.filename.filename;
+
           resolve({ filename: filename, bucketName: 'uploads' });
         });
 
@@ -70,7 +73,20 @@ const upload = multer({
   fileFilter: multerFilter,
 });
 
-exports.uploadPostImage = upload.fields([{ name: 'coverImage', maxCount: 1 }]);
+exports.setImgURL = (req, res, next) => {
+  if (!req.body.coverImage) {
+    return new AppError('Internal Server Error', 500);
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      filename: req.body.coverImage,
+    },
+  });
+};
+
+exports.uploadPostImage = upload.fields([{ name: 'image', maxCount: 1 }]);
 
 exports.getPostImage = catchAsync(async (req, res, next) => {
   const doc = await gfs.files.findOne({ filename: req.params.filename });
@@ -80,7 +96,7 @@ exports.getPostImage = catchAsync(async (req, res, next) => {
   }
 
   const readstream = gridfsBucket.openDownloadStream(doc._id);
-
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
   readstream.pipe(res);
 
   readstream.on('error', (err) => {
