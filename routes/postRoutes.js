@@ -20,7 +20,7 @@ router
 
 router
   .route('/')
-  .get(postController.getAllPosts) //authController.protect,
+  .get(postController.getPosts) //authController.protect,
   .post(
     authController.protect,
     authController.restrictTo('moderator', 'admin'),
@@ -34,6 +34,11 @@ router
   .get(authController.protect, postController.getPostBySlug);
 
 router.use(authController.protect);
+router.use(authController.restrictTo('admin'));
+
+router.route('/change-post-state/:id').patch(postController.updatePostState);
+router.route('/all/posts').get(postController.getAllPosts);
+
 router.use(authController.restrictTo('admin', 'moderator'));
 
 router

@@ -2,7 +2,13 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const path = require('path');
 const Post = require('../models/postModel');
-const { createOne, getOne, updateOne, deleteOne } = require('./handlerFactory');
+const {
+  createOne,
+  getOne,
+  updateOne,
+  deleteOne,
+  getAll,
+} = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const arslugify = require('arslugify');
 const AppError = require('../utils/appError');
@@ -186,11 +192,12 @@ exports.getUserFavoritePosts = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllPosts = catchAsync(async (req, res, next) => {
-  let filter = {};
+exports.getPosts = catchAsync(async (req, res, next) => {
+  // let filter = {};
   // if (req.user.role !== 'admin') {
   //   filter = { state: { $eq: 'approved' } };
   // }
+  let filter = { state: { $eq: 'approved' } };
   const features = new APIFeatures(Post.find(filter), req.query)
     .filter()
     .sort()
@@ -209,7 +216,39 @@ exports.getAllPosts = catchAsync(async (req, res, next) => {
   });
 });
 
+const filterObj = (obj, ...allowedFields) => {
+  const filteredObj = {};
+  Object.keys(obj).forEach((el) => {
+    if (allowedFields.includes(el)) {
+      filteredObj[el] = obj[el];
+    }
+  });
+  return filteredObj;
+};
+
+exports.updatePostState = catchAsync(async (req, res, next) => {
+  console.log(req.body);
+  const filteredBody = filterObj(req.body, 'state');
+  console.log(filteredBody);
+  const updatedPost = await Post.findByIdAndUpdate(
+    req.params.id,
+    filteredBody,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      post: updatedPost,
+    },
+  });
+});
+
 exports.createPost = createOne(Post);
 exports.getPost = getOne(Post);
 exports.updatePost = updateOne(Post);
 exports.deletePost = deleteOne(Post);
+exports.getAllPosts = getAll(Post);
