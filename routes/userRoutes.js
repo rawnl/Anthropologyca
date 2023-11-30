@@ -9,6 +9,8 @@ router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 
+router.get('/user-photo/:filename', userController.getUserPhoto);
+
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
@@ -20,10 +22,14 @@ router.patch('/updateMyPassword', authController.updatePassword);
 router.patch(
   '/updateMe',
   userController.uploadUserPhoto,
-  userController.resizeUserPhoto,
+  userController.deleteUserPhoto,
   userController.updateMe
 );
-router.delete('/deleteMe', userController.deleteMe);
+router.delete(
+  '/deleteMe',
+  // userController.deleteUserPhoto, // the delete function deactivates the account only
+  userController.deleteMe
+);
 
 router.get('/my-favorite-posts', postController.getUserFavoritePosts);
 
@@ -41,7 +47,8 @@ router.route('/').get(userController.getAllUsers);
 router
   .route('/:id')
   .get(userController.getUser)
-  .patch(userController.updateUser)
-  .delete(userController.deleteUser);
+  .patch(userController.upgradeUserAccount);
+// .patch(userController.updateUser)
+// .delete(userController.deleteUser);
 
 module.exports = router;
