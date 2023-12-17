@@ -227,9 +227,8 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 exports.updatePostState = catchAsync(async (req, res, next) => {
-  console.log(req.body);
   const filteredBody = filterObj(req.body, 'state');
-  console.log(filteredBody);
+
   const updatedPost = await Post.findByIdAndUpdate(
     req.params.id,
     filteredBody,

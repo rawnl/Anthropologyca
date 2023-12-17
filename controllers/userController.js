@@ -11,6 +11,8 @@ const factory = require('./handlerFactory');
 
 const connection = mongoose.connection;
 
+const { sendNotification } = require('../utils/socket-io');
+
 // Create GridFS Stream
 let gfs, gridfsBucket;
 connection.once('open', () => {
@@ -103,15 +105,14 @@ exports.getUserPhoto = catchAsync(async (req, res, next) => {
   });
 });
 
-// exports.checkDeleteUserPhoto = catchAsync(async (req, res, next) => {
-//   if (req.body.photo) {
-//     this.deleteUserPhoto;
-//   }
-//   next();
-// });
-
 exports.deleteUserPhoto = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
+
+  // There is no old photo to be deleted
+  if (user.photo === 'default.jpg') {
+    return next();
+  }
+
   const image = await gfs.files.findOne({ filename: user.photo });
 
   if (!image) {
@@ -130,13 +131,16 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     return next(new AppError('This route is not for password updates.', 400));
   }
 
-  const filteredBody = filterObj(req.body, 'name', 'email', 'bio');
+  const filteredBody = filterObj(req.body, 'name', 'email', 'bio', 'photo');
   if (req.file) filteredBody.photo = req.file.filename;
 
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
     new: true,
     runValidators: true,
   });
+
+  // Testing realtime notifications => to be deleted
+  sendNotification(`${updatedUser._id}`, 'success-update', 'Successful update');
 
   res.status(200).json({
     status: 'success',
