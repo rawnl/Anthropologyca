@@ -9,52 +9,21 @@ const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
 const factory = require('./handlerFactory');
 
-const connection = mongoose.connection;
+// const connection = mongoose.connection;
 
 const { sendNotification } = require('../utils/socket-io');
 
-// Create GridFS Stream
-let gfs, gridfsBucket;
-connection.once('open', () => {
-  gridfsBucket = new mongoose.mongo.GridFSBucket(connection.db, {
+const { GridFSBucket } = require('mongodb');
+
+let gridfsBucket;
+mongoose.connection.once('open', () => {
+  // Create a GridFSBucket instance
+  gridfsBucket = new GridFSBucket(mongoose.connection.db, {
     bucketName: 'usersPhotos',
   });
-  gfs = Grid(connection.db, mongoose.mongo);
-  gfs.collection('usersPhotos');
 });
 
-// WORKS FINE - UPLOAD & DELETE (NB: 2 COPIES [0|....])
-const storage = new GridFsStorage({
-  url: connection.client.s.url,
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      crypto.randomBytes(16, (err, buff) => {
-        if (err) {
-          return reject(new AppError(err.message, 500));
-        }
-        const filename =
-          buff.toString('hex') + Date.now() + path.extname(file.originalname);
-
-        const uploadStream = gridfsBucket.openUploadStream({
-          filename: filename,
-          bucketName: 'usersPhotos',
-        });
-
-        uploadStream.end(file.buffer);
-        uploadStream.once('finish', () => {
-          req.body.photo = uploadStream.filename.filename;
-
-          resolve({ filename: filename, bucketName: 'usersPhotos' });
-        });
-
-        // Handle errors
-        uploadStream.on('error', (err) => {
-          return reject(new AppError(err.message, 500));
-        });
-      });
-    });
-  },
-});
+const storage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
@@ -63,13 +32,57 @@ const multerFilter = (req, file, cb) => {
     cb(new AppError('Please upload only images', 404), false);
   }
 };
-
 const upload = multer({
   storage: storage,
   fileFilter: multerFilter,
 });
+const uploadUserPhoto = (req, res, next) => {
+  upload.single('photo')(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      // Multer error (e.g., file size exceeded)
+      return next(new AppError(err.message, 400));
+    } else if (err) {
+      // Other errors
+      return next(new AppError(err.message, 400));
+    }
 
-exports.uploadUserPhoto = upload.single('photo');
+    if (!req.file) {
+      return next(new AppError('No file provided', 400));
+    }
+
+    await uploadFileToBucket(req, res, next);
+    next();
+  });
+};
+
+const uploadFileToBucket = async (req, res, next) => {
+  return new Promise((resolve, reject) => {
+    crypto.randomBytes(16, (err, buff) => {
+      if (err) {
+        reject(new Error(err.message));
+      }
+
+      const filename =
+        buff.toString('hex') + Date.now() + path.extname(req.file.originalname);
+
+      const uploadStream = gridfsBucket.openUploadStream(filename);
+
+      uploadStream.end(req.file.buffer);
+      uploadStream.on('finish', () => {
+        req.body.photo = filename;
+        // resolve({ filename: filename, bucketName: 'usersPhotos' });
+        next();
+      });
+
+      uploadStream.on('error', (err) => {
+        // reject(new Error(err.message));
+        next(new AppError(err.message, err.code));
+      });
+    });
+  });
+};
+
+exports.uploadUserPhoto = uploadUserPhoto;
 
 const filterObj = (obj, ...allowedFields) => {
   const filteredObj = {};
@@ -88,15 +101,17 @@ exports.getMe = (req, res, next) => {
 
 exports.getUserPhoto = catchAsync(async (req, res, next) => {
   console.log(req.params.filename);
-  const doc = await gfs.files.findOne({
-    filename: req.params.filename,
-  });
+  const doc = await gridfsBucket
+    .find({
+      filename: req.params.filename,
+    })
+    .toArray();
 
-  if (!doc) {
+  if (doc.length < 1) {
     return next(new AppError('No document found.', 404));
   }
 
-  const readstream = gridfsBucket.openDownloadStream(doc._id);
+  const readstream = gridfsBucket.openDownloadStream(doc[0]._id);
   res.set('Cross-Origin-Resource-Policy', 'cross-origin');
   readstream.pipe(res);
 
@@ -108,12 +123,12 @@ exports.getUserPhoto = catchAsync(async (req, res, next) => {
 exports.deleteUserPhoto = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
 
-  // There is no old photo to be deleted
   if (user.photo === 'default.jpg') {
     return next();
   }
 
-  const image = await gfs.files.findOne({ filename: user.photo });
+  let images = await gridfsBucket.find({ filename: user.photo }).toArray();
+  const image = images[0];
 
   if (!image) {
     return next(new AppError('No document found.', 404));
@@ -132,7 +147,6 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   }
 
   const filteredBody = filterObj(req.body, 'name', 'email', 'bio', 'photo');
-  if (req.file) filteredBody.photo = req.file.filename;
 
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
     new: true,

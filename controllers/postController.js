@@ -20,51 +20,20 @@ const { GridFsStorage } = require('multer-gridfs-storage');
 const Grid = require('gridfs-stream');
 const stream = require('stream');
 
-const connection = mongoose.connection;
+// const connection = mongoose.connection;
 
-// Create GridFS Stream
-let gfs, gridfsBucket;
-connection.once('open', () => {
-  gridfsBucket = new mongoose.mongo.GridFSBucket(connection.db, {
+const { GridFSBucket } = require('mongodb');
+
+let gridfsBucket;
+
+mongoose.connection.once('open', () => {
+  // Create a GridFSBucket instance
+  gridfsBucket = new GridFSBucket(mongoose.connection.db, {
     bucketName: 'uploads',
   });
-  gfs = Grid(connection.db, mongoose.mongo);
-  gfs.collection('uploads');
 });
-// WORKS FINE - UPLOAD & DELETE (NB: 2 COPIES [0|....])
-const storage = new GridFsStorage({
-  url: connection.client.s.url,
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      crypto.randomBytes(16, (err, buff) => {
-        if (err) {
-          return reject(new AppError(err.message, 500));
-        }
-        const filename =
-          buff.toString('hex') + Date.now() + path.extname(file.originalname);
 
-        const uploadStream = gridfsBucket.openUploadStream({
-          filename: filename,
-          bucketName: 'uploads',
-        });
-
-        uploadStream.end(file.buffer);
-        uploadStream.once('finish', () => {
-          req.body.coverImage = uploadStream.filename.filename;
-          // For other images :
-          // req.body.filename = uploadStream.filename.filename;
-
-          resolve({ filename: filename, bucketName: 'uploads' });
-        });
-
-        // Handle errors
-        uploadStream.on('error', (err) => {
-          return reject(new AppError(err.message, 500));
-        });
-      });
-    });
-  },
-});
+const storage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
@@ -73,11 +42,58 @@ const multerFilter = (req, file, cb) => {
     cb(new AppError('Please upload only images', 404), false);
   }
 };
-
 const upload = multer({
   storage: storage,
   fileFilter: multerFilter,
 });
+
+exports.uploadPostImage = (req, res, next) => {
+  upload.single('image')(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      // Multer error (e.g., file size exceeded)
+      return next(new AppError(err.message, 400));
+    } else if (err) {
+      // Other errors
+      return next(new AppError(err.message, 400));
+    }
+
+    if (!req.file) {
+      return next(new AppError('No file provided', 400));
+    }
+
+    await uploadFileToBucket(req, res, next);
+    next();
+  });
+};
+
+const uploadFileToBucket = async (req, res, next) => {
+  return new Promise((resolve, reject) => {
+    crypto.randomBytes(16, (err, buff) => {
+      if (err) {
+        reject(new Error(err.message));
+      }
+
+      const filename =
+        buff.toString('hex') + Date.now() + path.extname(req.file.originalname);
+
+      const uploadStream = gridfsBucket.openUploadStream(filename);
+
+      uploadStream.end(req.file.buffer);
+      uploadStream.on('finish', () => {
+        req.body.coverImage = filename;
+        console.log(req.body.coverImage);
+        // For other images :
+        // req.body.filename = uploadStream.filename.filename;
+        // resolve({ filename: filename, bucketName: 'usersPhotos' });
+        next();
+      });
+
+      uploadStream.on('error', (err) => {
+        next(new AppError(err.message, err.code));
+      });
+    });
+  });
+};
 
 exports.setImgURL = (req, res, next) => {
   if (!req.body.coverImage) {
@@ -92,16 +108,16 @@ exports.setImgURL = (req, res, next) => {
   });
 };
 
-exports.uploadPostImage = upload.fields([{ name: 'image', maxCount: 1 }]);
-
 exports.getPostImage = catchAsync(async (req, res, next) => {
-  const doc = await gfs.files.findOne({ filename: req.params.filename });
+  const doc = await gridfsBucket
+    .find({ filename: req.params.filename })
+    .toArray();
 
-  if (!doc) {
+  if (doc.length < 1) {
     return next(new AppError('No document found.', 404));
   }
 
-  const readstream = gridfsBucket.openDownloadStream(doc._id);
+  const readstream = gridfsBucket.openDownloadStream(doc[0]._id);
   res.set('Cross-Origin-Resource-Policy', 'cross-origin');
   readstream.pipe(res);
 
@@ -112,13 +128,16 @@ exports.getPostImage = catchAsync(async (req, res, next) => {
 
 exports.deletePostImage = catchAsync(async (req, res, next) => {
   const post = await Post.findById(req.params.id);
-  const image = await gfs.files.findOne({ filename: post.coverImage });
 
-  if (!image) {
+  const images = await gridfsBucket
+    .find({ filename: post.coverImage })
+    .toArray();
+
+  if (images.length < 1) {
     return next(new AppError('No document found.', 404));
   }
 
-  gridfsBucket.delete(image._id, function (err) {
+  gridfsBucket.delete(images[0]._id, function (err) {
     console.log(err);
     return next(new AppError("Couldn't remove the file", 500));
   });
@@ -128,6 +147,7 @@ exports.deletePostImage = catchAsync(async (req, res, next) => {
 
 exports.setAuthor = (req, res, next) => {
   req.body.author = req.user.id;
+  console.log(req.body.coverImage);
   next();
 };
 
