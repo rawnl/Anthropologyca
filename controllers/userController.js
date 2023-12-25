@@ -109,7 +109,7 @@ exports.getUserPhoto = catchAsync(async (req, res, next) => {
     .toArray();
 
   if (doc.length < 1) {
-    return next(new AppError('No document found.', 404));
+    return next(new AppError('No document found. --getUserPhoto', 404));
   }
 
   const readstream = gridfsBucket.openDownloadStream(doc[0]._id);
@@ -131,13 +131,13 @@ exports.deleteUserPhoto = catchAsync(async (req, res, next) => {
   let images = await gridfsBucket.find({ filename: user.photo }).toArray();
   const image = images[0];
 
-  if (!image) {
-    return next(new AppError('No document found.', 404));
+  //!image
+  if (image) {
+    gridfsBucket.delete(image._id, function (err) {
+      return next(new AppError("Couldn't remove the photo", 500));
+    });
+    // return next(new AppError('No document found. --deleteUserPhoto', 404));
   }
-
-  gridfsBucket.delete(image._id, function (err) {
-    return next(new AppError("Couldn't remove the photo", 500));
-  });
 
   next();
 });
