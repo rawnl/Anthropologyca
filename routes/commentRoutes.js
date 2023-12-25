@@ -11,6 +11,7 @@ router
   .get(commentController.setUserPostIds, commentController.getAllComments)
   .post(commentController.setUserPostIds, commentController.createComment);
 
+// Add some restrictions to delete comment by admin and the same user
 router
   .route('/:id')
   .get(commentController.getComment)

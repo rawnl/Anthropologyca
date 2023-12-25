@@ -46,11 +46,12 @@ const uploadUserPhoto = (req, res, next) => {
       return next(new AppError(err.message, 400));
     }
 
-    if (!req.file) {
-      return next(new AppError('No file provided', 400));
+    // !req.file
+    if (req.file) {
+      // return next(new AppError('No file provided', 400));
+      await uploadFileToBucket(req, res, next);
     }
 
-    await uploadFileToBucket(req, res, next);
     next();
   });
 };
@@ -123,7 +124,7 @@ exports.getUserPhoto = catchAsync(async (req, res, next) => {
 exports.deleteUserPhoto = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
 
-  if (user.photo === 'default.jpg') {
+  if (!req.body.photo || user.photo === 'default.jpg') {
     return next();
   }
 
