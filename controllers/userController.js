@@ -9,8 +9,6 @@ const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
 const factory = require('./handlerFactory');
 
-// const connection = mongoose.connection;
-
 const { sendNotification } = require('../utils/socket-io');
 
 const { GridFSBucket } = require('mongodb');
@@ -109,7 +107,7 @@ exports.getUserPhoto = catchAsync(async (req, res, next) => {
     .toArray();
 
   if (doc.length < 1) {
-    return next(new AppError('No document found. --getUserPhoto', 404));
+    return next(new AppError('No document found.', 404));
   }
 
   const readstream = gridfsBucket.openDownloadStream(doc[0]._id);
@@ -194,8 +192,39 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getAllUsers = catchAsync(async (req, res, next) => {
+  let docs = await User.aggregate([
+    {
+      $lookup: {
+        from: 'posts',
+        localField: '_id',
+        foreignField: 'author',
+        as: 'posts',
+      },
+    },
+  ])
+    .exec()
+    .then((usersWithPosts) => {
+      // console.log(usersWithPosts);
+      return usersWithPosts;
+    })
+    .catch((err) => {
+      // console.error(err);
+      return next(new AppError(err.message, err.code));
+    });
+
+  res.status(200).json({
+    status: 'success',
+    requestedAt: new Date(),
+    results: docs.length,
+    data: {
+      docs,
+    },
+  });
+});
+
 exports.createUser = factory.createOne(User);
 exports.getUser = factory.getOne(User);
 // exports.updateUser = factory.updateOne(User);
 // exports.deleteUser = factory.deleteOne(User);
-exports.getAllUsers = factory.getAll(User);
+// exports.getAllUsers = factory.getAll(User); // modified
