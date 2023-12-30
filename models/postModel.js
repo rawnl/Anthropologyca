@@ -85,7 +85,14 @@ postSchema.virtual('likes', {
 });
 
 postSchema.pre('save', function (next) {
-  this.slug = arslugify(this.title);
+  this.slug = `${Date.now()}-${arslugify(this.title)}`;
+  next();
+});
+
+postSchema.post('save', function (doc, next) {
+  if (this.state === 'approved') {
+    this.publishedAt = this.createdAt;
+  }
   next();
 });
 

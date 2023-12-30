@@ -1,5 +1,5 @@
 let io;
-let connectedUsers = [];
+const userSocketMap = new Map();
 
 const getUserSocket = (id) => {
   const user = connectedUsers.find((user) => user.user === id);
@@ -13,7 +13,18 @@ exports.socketConnection = (server) => {
   io = require('socket.io')(server, {
     pingTimeout: 60000,
     cors: {
-      origin: '*',
+      // origin: '*',
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? false
+          : [
+              'http://localhost:8080',
+              'http://127.0.0.1:8080',
+              'http://localhost:5000',
+              'http://127.0.0.1:5000',
+              'http://localhost:5501',
+              'http://127.0.0.1:5501',
+            ],
     },
   });
 
@@ -21,21 +32,23 @@ exports.socketConnection = (server) => {
     console.log(`a user connected with socketID : .. ${socket.id}`);
 
     socket.on('login', (data) => {
-      console.log(data.socket);
+      userSocketMap.set(data.user.toString(), socket.id);
+
       console.log(
         `Login attempt from user : ${data.user} | MESSAGE : ${data.message}`
       );
 
-      connectedUsers.push({ user: data.user, socket: data.socket });
-      console.log(connectedUsers);
+      socket.emit('login-success', 'SUCCESSFUL LOGIN --1');
+      io.to(socket).emit('login-success', 'SUCCESSFUL LOGIN --2');
+      io.to(data.socket).emit('login-success', 'SUCCESSFUL LOGIN --3'); // this works
+      console.log(userSocketMap);
 
-      connectedUsers.forEach((element) => {
-        io.to(element.socket).emit('login-success', 'SUCCESSFUL LOGIN');
-      });
+      // userSocketMap.forEach((element) => {
+      //   io.to(element.socket).emit('login-success', 'SUCCESSFUL LOGIN');
+      // });
     });
 
     socket.on('notify', (data) => {
-      console.log(data.socket);
       io.to(data.socket).emit(
         'notify',
         'NOTIFY: @server is notified and sent back this :)'
@@ -43,6 +56,7 @@ exports.socketConnection = (server) => {
     });
 
     socket.on('disconnect', () => {
+      // userSocketMap.delete(userId);
       console.info(`Client disconnected [id=${socket.id}]`);
     });
   });
@@ -56,6 +70,44 @@ exports.sendNotification = (user, key, message) => {
   io.to(socket).emit(key, message);
 };
 
-exports.notify = (key, message) => {
-  io.emit(key, message);
+// exports.notify = async (key, message) => {
+//   io.emit(key, message);
+// };
+
+exports.notify = async (type, notification) => {
+  try {
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        // io.emit(key, message);
+        console.log('userSocketMap : ' + userSocketMap);
+        console.log('notification.receivers : ' + notification.receivers);
+        notification.receivers.map((receiver) => {
+          // const sktID = userSocketMap.get(receiver._id.toString());
+          // console.log('sktID : ' + sktID);
+          // const targetSocket = io.sockets.connected[sktID];
+
+          // console.log('Receiver IDs:', notification.receivers.map(receiver => receiver._id.toString()));
+
+          const targetSocket = io.sockets.sockets.get(
+            userSocketMap.get(receiver._id.toString())
+          );
+
+          if (targetSocket) {
+            console.log('targetSocket : ' + targetSocket);
+            targetSocket.emit(type, notification.content);
+          }
+
+          console.log('Receiver ID:', receiver._id.toString());
+          console.log(
+            'Socket ID from userSocketMap:',
+            userSocketMap.get(receiver._id.toString())
+          );
+          console.log('Target Socket:', targetSocket);
+        });
+        resolve();
+      }, 1000);
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };

@@ -26,6 +26,7 @@ router
     authController.restrictTo('moderator', 'admin'),
     postController.uploadPostImage,
     postController.setAuthor,
+    postController.setPostState,
     postController.createPost
   );
 

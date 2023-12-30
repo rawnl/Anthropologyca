@@ -1,28 +1,20 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const path = require('path');
-const Post = require('../models/postModel');
-const {
-  createOne,
-  getOne,
-  updateOne,
-  deleteOne,
-  getAll,
-} = require('./handlerFactory');
-const catchAsync = require('../utils/catchAsync');
-const arslugify = require('arslugify');
-const AppError = require('../utils/appError');
-const Like = require('../models/likeModel');
-const APIFeatures = require('../utils/apiFeatures');
 const multer = require('multer');
-
-const { GridFsStorage } = require('multer-gridfs-storage');
-const Grid = require('gridfs-stream');
-const stream = require('stream');
-
-// const connection = mongoose.connection;
-
 const { GridFSBucket } = require('mongodb');
+const arslugify = require('arslugify');
+
+const Post = require('../models/postModel');
+const Like = require('../models/likeModel');
+const Notification = require('../models/notificationModel');
+const User = require('../models/userModel');
+const { getOne, updateOne, deleteOne, getAll } = require('./handlerFactory');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+const APIFeatures = require('../utils/apiFeatures');
+
+const { notify } = require('../utils/socket-io');
 
 let gridfsBucket;
 
@@ -147,7 +139,11 @@ exports.deletePostImage = catchAsync(async (req, res, next) => {
 
 exports.setAuthor = (req, res, next) => {
   req.body.author = req.user.id;
-  console.log(req.body.coverImage);
+  next();
+};
+
+exports.setPostState = (req, res, next) => {
+  if (req.user.role === 'admin') req.body.state = 'approved';
   next();
 };
 
@@ -213,10 +209,6 @@ exports.getUserFavoritePosts = catchAsync(async (req, res, next) => {
 });
 
 exports.getPosts = catchAsync(async (req, res, next) => {
-  // let filter = {};
-  // if (req.user.role !== 'admin') {
-  //   filter = { state: { $eq: 'approved' } };
-  // }
   let filter = { state: { $eq: 'approved' } };
   const features = new APIFeatures(Post.find(filter), req.query)
     .filter()
@@ -246,6 +238,38 @@ const filterObj = (obj, ...allowedFields) => {
   return filteredObj;
 };
 
+exports.createPost = catchAsync(async (req, res, next) => {
+  const doc = await Post.create(req.body);
+
+  let filter = {};
+  if (doc.state === 'under-review') {
+    filter = { role: 'admin' };
+  }
+
+  receivers = await User.find(filter, '_id');
+
+  console.log(receivers);
+
+  const content = `${doc.title} لقد تمت إضافة مقال جديد تحت عنوان `;
+
+  req.body.notification = {
+    sender: req.body.author,
+    receivers: receivers,
+    content: content,
+    type: 'new-post',
+  };
+
+  const notif = await Notification.create(req.body.notification);
+
+  await notify(notif.type, notif);
+
+  res.status(200).json({
+    status: 'success',
+    data: { data: doc },
+  });
+});
+
+// To review - restrict when a post is published for example
 exports.updatePostState = catchAsync(async (req, res, next) => {
   const filteredBody = filterObj(req.body, 'state');
 
@@ -266,7 +290,7 @@ exports.updatePostState = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createPost = createOne(Post);
+// exports.createPost = createOne(Post);
 exports.getPost = getOne(Post);
 exports.updatePost = updateOne(Post);
 exports.deletePost = deleteOne(Post);

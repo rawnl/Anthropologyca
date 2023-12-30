@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const Notification = require('../models/NotificationModel');
+const Notification = require('../models/notificationModel');
 const { createOne, getOne } = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -28,10 +28,10 @@ exports.getUsersNotifications = catchAsync(async (req, res, next) => {
 });
 
 exports.markNotificationAsRead = catchAsync(async (req, res, next) => {
-  const updatedNotification = await Notification.findByIdAndUpdate(
-    req.params.id,
-    { status: true }
-  );
+  // const updatedNotification = await Notification.findByIdAndUpdate(
+  //   req.params.id,
+  //   { status: true }
+  // );
 
   res.status(200).json({
     status: 'success',
@@ -41,5 +41,11 @@ exports.markNotificationAsRead = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createNotification = createOne(Notification);
-exports.getNotifications = getOne(Notification);
+exports.getNotification = getOne(Notification);
+// exports.createNotification = createOne(Notification);
+
+exports.createNotification = catchAsync(async (req, res, next) => {
+  const doc = await Notification.create(req.body.notification);
+  req.notification = doc;
+  next();
+});
