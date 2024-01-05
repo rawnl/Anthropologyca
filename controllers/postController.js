@@ -162,7 +162,7 @@ exports.isAuthorized = catchAsync(async (req, re, next) => {
 });
 
 exports.getPostBySlug = catchAsync(async (req, res, next) => {
-  let query = Post.findOne({ slug: { $eq: req.params.slug } }).populate({
+  const query = Post.findOne({ slug: { $eq: req.params.slug } }).populate({
     path: 'comments',
     select: ['user', 'comment', 'createdAt'],
   });

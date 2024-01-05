@@ -39,7 +39,51 @@ exports.getAllComments = catchAsync(async (req, res, next) => {
     }
   }
 
-  let docs = await Comment.find(filter); //{ post: req.params.postId }
+  const docs = await Comment.aggregate([
+    {
+      $match: filter,
+    },
+    {
+      $lookup: {
+        from: 'posts',
+        localField: 'post',
+        foreignField: '_id',
+        as: 'post',
+      },
+    },
+    {
+      $unwind: {
+        path: '$post',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    {
+      $unwind: {
+        path: '$user',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        'post._id': 1,
+        'post.title': 1,
+        'user._id': 1,
+        'user.name': 1,
+        'user.photo': 1,
+        comment: 1,
+        createdAt: 1,
+        restricted: 1,
+      },
+    },
+  ]);
 
   res.status(200).json({
     status: 'success',

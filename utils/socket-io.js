@@ -81,29 +81,31 @@ exports.notify = async (type, notification) => {
         // io.emit(key, message);
         console.log('userSocketMap : ' + userSocketMap);
         console.log('notification.receivers : ' + notification.receivers);
-        notification.receivers.map((receiver) => {
-          // const sktID = userSocketMap.get(receiver._id.toString());
-          // console.log('sktID : ' + sktID);
-          // const targetSocket = io.sockets.connected[sktID];
+        if (notification.receivers) {
+          notification.receivers.map((receiver) => {
+            // const sktID = userSocketMap.get(receiver._id.toString());
+            // console.log('sktID : ' + sktID);
+            // const targetSocket = io.sockets.connected[sktID];
 
-          // console.log('Receiver IDs:', notification.receivers.map(receiver => receiver._id.toString()));
+            // console.log('Receiver IDs:', notification.receivers.map(receiver => receiver._id.toString()));
 
-          const targetSocket = io.sockets.sockets.get(
-            userSocketMap.get(receiver._id.toString())
-          );
+            const targetSocket = io.sockets.sockets.get(
+              userSocketMap.get(receiver._id.toString())
+            );
 
-          if (targetSocket) {
-            console.log('targetSocket : ' + targetSocket);
-            targetSocket.emit(type, notification.content);
-          }
+            if (targetSocket) {
+              console.log('targetSocket : ' + targetSocket);
+              targetSocket.emit(type, notification.content);
+            }
 
-          console.log('Receiver ID:', receiver._id.toString());
-          console.log(
-            'Socket ID from userSocketMap:',
-            userSocketMap.get(receiver._id.toString())
-          );
-          console.log('Target Socket:', targetSocket);
-        });
+            console.log('Receiver ID:', receiver._id.toString());
+            console.log(
+              'Socket ID from userSocketMap:',
+              userSocketMap.get(receiver._id.toString())
+            );
+            console.log('Target Socket:', targetSocket);
+          });
+        }
         resolve();
       }, 1000);
     });
