@@ -52,10 +52,7 @@ exports.getAllComments = catchAsync(async (req, res, next) => {
       },
     },
     {
-      $unwind: {
-        path: '$post',
-        preserveNullAndEmptyArrays: true,
-      },
+      $unwind: '$post',
     },
     {
       $lookup: {
@@ -66,10 +63,7 @@ exports.getAllComments = catchAsync(async (req, res, next) => {
       },
     },
     {
-      $unwind: {
-        path: '$user',
-        preserveNullAndEmptyArrays: true,
-      },
+      $unwind: '$post',
     },
     {
       $project: {
