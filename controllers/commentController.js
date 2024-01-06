@@ -63,7 +63,7 @@ exports.getAllComments = catchAsync(async (req, res, next) => {
       },
     },
     {
-      $unwind: '$post',
+      $unwind: '$user',
     },
     {
       $project: {
