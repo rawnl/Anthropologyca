@@ -35,11 +35,6 @@ router
   .get(authController.protect, postController.getPostBySlug);
 
 router.use(authController.protect);
-router.use(authController.restrictTo('admin'));
-
-router.route('/change-post-state/:id').patch(postController.updatePostState);
-router.route('/all/posts').get(postController.getAllPosts);
-
 router.use(authController.restrictTo('admin', 'moderator'));
 
 router
@@ -59,5 +54,10 @@ router
     postController.deletePostImage,
     postController.deletePost
   );
+
+router.use(authController.restrictTo('admin'));
+
+router.route('/change-post-state/:id').patch(postController.updatePostState);
+router.route('/all/posts').get(postController.getAllPosts);
 
 module.exports = router;

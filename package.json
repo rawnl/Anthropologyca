@@ -53,6 +53,7 @@
     "pug": "^3.0.2",
     "sharp": "^0.32.4",
     "socket.io": "^4.7.2",
+    "socketio-jwt": "^4.6.2",
     "validator": "^13.9.0",
     "xss-clean": "^0.1.4"
   }

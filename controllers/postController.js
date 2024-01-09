@@ -154,7 +154,10 @@ exports.setPostSlug = (req, res, next) => {
 
 exports.isAuthorized = catchAsync(async (req, re, next) => {
   const post = await Post.findById(req.params.id);
-  if (post.author !== req.user.id && req.user.role !== 'admin')
+  if (!post) {
+    return next(new AppError('No document found', 404));
+  }
+  if (post.author.id !== req.user.id && req.user.role !== 'admin')
     return next(
       new AppError('You are not authorized to perform this action', 403)
     );

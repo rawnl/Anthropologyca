@@ -99,7 +99,6 @@ exports.getMe = (req, res, next) => {
 };
 
 exports.getUserPhoto = catchAsync(async (req, res, next) => {
-  console.log(req.params.filename);
   const doc = await gridfsBucket
     .find({
       filename: req.params.filename,

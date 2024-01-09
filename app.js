@@ -23,8 +23,8 @@ const notificationRouter = require('./routes/notificationRoutes');
 const app = express();
 
 // Enable cors
-app.use(cors());
-app.options('*', cors());
+// app.options('*', cors());
+app.use(cors({ origin: '*', credentials: 'true' }));
 
 // Serving static files
 app.use(express.static(`${__dirname}/public`));
@@ -38,6 +38,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Limit requests from same IP address
+app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']); // to reconsider / well understand
 const limiter = rateLimit({
   max: 1000,
   windowMs: 5 * 60 * 1000,

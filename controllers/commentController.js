@@ -29,7 +29,6 @@ exports.isAuthorized = catchAsync(async (req, re, next) => {
 exports.getAllComments = catchAsync(async (req, res, next) => {
   let filter = {};
   if (req.params.postId) {
-    console.log('all users');
     filter = { post: { $eq: req.params.postId } };
   } else {
     if (req.user.role !== 'admin') {

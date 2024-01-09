@@ -37,6 +37,29 @@ const createAndSendToken = (user, statusCode, res) => {
   });
 };
 
+const protect = async (token) => {
+  if (!token) {
+    return new AppError('Unauthorized: Token Not Provided', 401);
+  }
+
+  const decoded = await promisify(jwt.verify)(
+    token,
+    process.env.JWT_SECRET_KEY
+  );
+
+  const currentUser = await User.findById(decoded.id);
+
+  if (!currentUser) {
+    return new AppError('Unauthorized: User not found', 401);
+  }
+
+  if (currentUser.passwordHasChanged(decoded.iat)) {
+    return new AppError('Unauthorized: Password has changed recently', 401);
+  }
+
+  return currentUser;
+};
+
 exports.signup = catchAsync(async (req, res, next) => {
   // 1. Adding user to database
   const user = await User.create(req.body);
@@ -194,39 +217,30 @@ exports.protect = catchAsync(async (req, res, next) => {
     token = req.cookies.jwt;
   }
 
-  if (!token) {
-    return next(new AppError('Please log in to get access', 401));
-  }
-
-  const decoded = await promisify(jwt.verify)(
-    token,
-    process.env.JWT_SECRET_KEY
-  );
-
-  const currentUser = await User.findById(decoded.id);
-
-  if (!currentUser) {
-    return next(
-      new AppError('The user belonging to this token does no longer exist', 401)
-    );
-  }
-
-  if (currentUser.passwordHasChanged(decoded.iat)) {
-    return next(
-      new AppError(
-        'Password has changed recently. Please log in to get access',
-        401
-      )
-    );
-  }
-
-  req.user = currentUser;
-  res.locals.user = currentUser;
+  const user = await protect(token);
+  req.user = user;
+  res.locals.user = user;
   next();
+});
+
+exports.socketProtect = catchAsync((socket, next) => {
+  const token = socket.handshake.auth.token;
+
+  protect(token)
+    .then((user) => {
+      socket.user = user;
+      next();
+    })
+    .catch((error) => {
+      return next(new AppError(error.message, 500));
+    });
 });
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
+    console.log(roles.length);
+
+    // console.log(req.user.role);
     if (!roles.includes(req.user.role)) {
       return next(
         new AppError('You are not authorized to perform this action', 403)
