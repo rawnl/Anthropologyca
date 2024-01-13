@@ -1,11 +1,10 @@
 const { socketProtect } = require('../controllers/authController');
-const { Server } = require('socket.io');
 
 let io;
 const userSocketMap = new Map();
 
 const getUserSocket = (id) => {
-  const user = connectedUsers.find((user) => user.user === id);
+  const user = userSocketMap.find((user) => user.user === id);
   if (user) {
     return user.socket;
   }
@@ -13,7 +12,8 @@ const getUserSocket = (id) => {
 };
 
 exports.socketConnection = (server) => {
-  io = new Server(server, {
+  io = require('socket.io')(server, {
+    connectionStateRecovery: {},
     pingTimeout: 160000,
     cors: {
       // origin: '*',
@@ -28,6 +28,7 @@ exports.socketConnection = (server) => {
               'http://localhost:5501',
               'http://127.0.0.1:5501',
             ],
+      credentials: true,
     },
   });
 
@@ -43,11 +44,8 @@ exports.socketConnection = (server) => {
         `Login attempt from user : ${data.user} | MESSAGE : ${data.message}`
       );
 
-      // 1.Add the connected user to the connected users map
+      // Add the connected user to the connected users map
       userSocketMap.set(data.user.toString(), socket.id);
-
-      // 2. Notify the connected user
-      io.to(data.socket).emit('login-success', 'SUCCESSFUL LOGIN');
     });
 
     socket.on('disconnect', async () => {
@@ -67,23 +65,20 @@ exports.socketConnection = (server) => {
 
     // For debugging purposes
     socket.onAny((event, ...args) => {
-      console.log('[DEBUG]', event, args);
+      console.log('[DEBUG]: [Received]', event, args);
+    });
+
+    socket.onAnyOutgoing((event, ...args) => {
+      console.log('[DEBUG]: [Emitted]', event, args);
     });
   });
-};
-
-exports.sendNotification = (user, key, message) => {
-  socket = getUserSocket(user);
-  io.to(socket).emit(key, message);
 };
 
 exports.notify = async (type, notification) => {
   try {
     await new Promise((resolve) => {
       setTimeout(() => {
-        console.log('userSocketMap : ' + userSocketMap);
-        console.log('notification.receivers : ' + notification.receivers);
-        if (notification.receivers) {
+        if (userSocketMap && notification.receivers) {
           notification.receivers.map((receiver) => {
             const targetSocket = io.sockets.sockets.get(
               userSocketMap.get(receiver._id.toString())

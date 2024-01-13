@@ -17,7 +17,7 @@ let gridfsBucket;
 mongoose.connection.once('open', () => {
   // Create a GridFSBucket instance
   gridfsBucket = new GridFSBucket(mongoose.connection.db, {
-    bucketName: 'usersPhotos',
+    bucketName: 'users.photos',
   });
 });
 
@@ -30,10 +30,12 @@ const multerFilter = (req, file, cb) => {
     cb(new AppError('Please upload only images', 404), false);
   }
 };
+
 const upload = multer({
   storage: storage,
   fileFilter: multerFilter,
 });
+
 const uploadUserPhoto = (req, res, next) => {
   upload.single('photo')(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
@@ -121,7 +123,7 @@ exports.getUserPhoto = catchAsync(async (req, res, next) => {
 exports.deleteUserPhoto = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
 
-  if (!req.body.photo || user.photo === 'default.jpg') {
+  if (!req.body.photo || !user.photo) {
     return next();
   }
 
@@ -151,8 +153,8 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     runValidators: true,
   });
 
-  // Testing realtime notifications => to be deleted
-  sendNotification(`${updatedUser._id}`, 'success-update', 'Successful update');
+  // // Testing realtime notifications => to be deleted
+  // sendNotification(`${updatedUser._id}`, 'success-update', 'Successful update');
 
   res.status(200).json({
     status: 'success',

@@ -21,7 +21,7 @@ let gridfsBucket;
 mongoose.connection.once('open', () => {
   // Create a GridFSBucket instance
   gridfsBucket = new GridFSBucket(mongoose.connection.db, {
-    bucketName: 'uploads',
+    bucketName: 'posts.covers',
   });
 });
 
@@ -73,7 +73,6 @@ const uploadFileToBucket = async (req, res, next) => {
       uploadStream.end(req.file.buffer);
       uploadStream.on('finish', () => {
         req.body.coverImage = filename;
-        console.log(req.body.coverImage);
         // For other images :
         // req.body.filename = uploadStream.filename.filename;
         // resolve({ filename: filename, bucketName: 'usersPhotos' });
@@ -244,27 +243,27 @@ const filterObj = (obj, ...allowedFields) => {
 exports.createPost = catchAsync(async (req, res, next) => {
   const doc = await Post.create(req.body);
 
-  let filter = {};
+  const ObjectId = require('mongodb').ObjectId;
+
+  let filter = { _id: { $ne: new ObjectId(req.body.author) } };
   if (doc.state === 'under-review') {
-    filter = { role: 'admin' };
+    filter = { _id: { $ne: new ObjectId(req.body.author) }, role: 'admin' };
   }
 
   receivers = await User.find(filter, '_id');
 
-  console.log(receivers);
-
-  const content = `${doc.title} لقد تمت إضافة مقال جديد تحت عنوان `;
-
   req.body.notification = {
     sender: req.body.author,
     receivers: receivers,
-    content: content,
+    content: `${doc.title} لقد تمت إضافة مقال جديد تحت عنوان `,
     type: 'new-post',
   };
 
-  const notif = await Notification.create(req.body.notification);
+  const notification = await Notification.create(req.body.notification);
 
-  await notify(notif.type, notif);
+  if (notification) {
+    notify(notification.type, notification);
+  }
 
   res.status(200).json({
     status: 'success',

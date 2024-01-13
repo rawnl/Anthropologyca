@@ -223,8 +223,8 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.socketProtect = catchAsync((socket, next) => {
-  const token = socket.handshake.auth.token;
+exports.socketProtect = (socket, next) => {
+  const token = socket.handshake.auth?.token || socket.handshake.headers?.token;
 
   protect(token)
     .then((user) => {
@@ -234,13 +234,10 @@ exports.socketProtect = catchAsync((socket, next) => {
     .catch((error) => {
       return next(new AppError(error.message, 500));
     });
-});
+};
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    console.log(roles.length);
-
-    // console.log(req.user.role);
     if (!roles.includes(req.user.role)) {
       return next(
         new AppError('You are not authorized to perform this action', 403)

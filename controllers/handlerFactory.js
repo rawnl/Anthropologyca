@@ -2,17 +2,9 @@ const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
-const { notify } = require('../utils/socket-io');
-
 exports.createOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.create(req.body);
-
-    // Testing realtime notification -> to be refactored
-    notify(
-      'new-content',
-      `Added New Post By ${doc.author} Entitled :  ${doc.title} `
-    );
 
     res.status(200).json({
       status: 'success',

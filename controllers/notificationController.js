@@ -1,37 +1,37 @@
-const mongoose = require('mongoose');
-const Notification = require('../models/notificationModel');
-const { createOne, getOne } = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
+const Notification = require('../models/notificationModel');
+const { getOne } = require('./handlerFactory');
 
 exports.getUsersNotifications = catchAsync(async (req, res, next) => {
-  console.log(req.user.id);
-  console.log(req.params.userId);
+  // let filter = { receivers: req.user.id, read: false };
+  let filter = { receivers: { $in: [req.user.id] } };
 
-  let filter = { receiver: req.user.id, read: false };
-
-  const features = new APIFeatures(Notification.find(filter), req.query)
+  const features = new APIFeatures(
+    Notification.find(filter).select('-sender -receivers -read_by'),
+    req.query
+  )
     .filter()
     .sort()
     .limitFields()
     .paginate();
 
-  let notifications = await features.query;
+  let docs = await features.query;
 
   res.status(200).json({
     status: 'success',
     requestedAt: new Date(),
     results: docs.length,
-    notifications,
+    docs,
   });
 });
 
 exports.markNotificationAsRead = catchAsync(async (req, res, next) => {
-  // const updatedNotification = await Notification.findByIdAndUpdate(
-  //   req.params.id,
-  //   { status: true }
-  // );
+  console.log(req.user.id);
+  const updatedNotification = await Notification.findByIdAndUpdate(
+    req.params.id,
+    { $push: { read_by: { readerId: req.user.id } } }
+  ).select('-sender -receivers -read_by');
 
   res.status(200).json({
     status: 'success',
@@ -42,10 +42,3 @@ exports.markNotificationAsRead = catchAsync(async (req, res, next) => {
 });
 
 exports.getNotification = getOne(Notification);
-// exports.createNotification = createOne(Notification);
-
-exports.createNotification = catchAsync(async (req, res, next) => {
-  const doc = await Notification.create(req.body.notification);
-  req.notification = doc;
-  next();
-});
