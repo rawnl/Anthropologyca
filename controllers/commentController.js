@@ -1,7 +1,13 @@
 const Comment = require('../models/commentModel');
+const Post = require('../models/postModel');
+const Notification = require('../models/notificationModel');
+const User = require('../models/userModel');
+
 const factory = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+
+const { notify } = require('../utils/socket-io');
 
 exports.setUserPostIds = (req, res, next) => {
   console.log(req.params);
@@ -88,7 +94,37 @@ exports.getAllComments = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createComment = factory.createOne(Comment);
+exports.createComment = catchAsync(async (req, res, next) => {
+  // 01. Creating & saving the comment
+  const doc = await Comment.create(req.body);
+
+  // 02. Fetching the corresponding post's author
+  const ObjectId = require('mongodb').ObjectId;
+  const relatedPost = await Post.findOne(
+    { _id: { $eq: new ObjectId(req.body.post) } },
+    'author'
+  );
+
+  // 03. Creating & saving the notification
+  const notification = await Notification.create({
+    sender: req.user._id,
+    receivers: [relatedPost.author._id],
+    content: {
+      commentId: doc._id,
+    },
+    type: 'comment',
+  });
+
+  // 04. Notifying the post author of the new comment
+  notify(notification.type, notification);
+
+  res.status(200).json({
+    status: 'success',
+    data: { data: doc },
+  });
+});
+
+// exports.createComment = factory.createOne(Comment);
 exports.getComment = factory.getOne(Comment);
 exports.updateComment = factory.updateOne(Comment);
 exports.deleteComment = factory.deleteOne(Comment);

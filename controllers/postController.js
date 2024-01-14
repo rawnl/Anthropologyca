@@ -241,10 +241,11 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 exports.createPost = catchAsync(async (req, res, next) => {
+  // 01. Creating & saving the post
   const doc = await Post.create(req.body);
 
+  // 02. Fetching the users to be notified
   const ObjectId = require('mongodb').ObjectId;
-
   let filter = { _id: { $ne: new ObjectId(req.body.author) } };
   if (doc.state === 'under-review') {
     filter = { _id: { $ne: new ObjectId(req.body.author) }, role: 'admin' };
@@ -252,18 +253,18 @@ exports.createPost = catchAsync(async (req, res, next) => {
 
   receivers = await User.find(filter, '_id');
 
-  req.body.notification = {
+  // 03. Creating and saving the notification
+  const notification = await Notification.create({
     sender: req.body.author,
     receivers: receivers,
-    content: `${doc.title} لقد تمت إضافة مقال جديد تحت عنوان `,
+    content: {
+      postId: doc._id,
+    },
     type: 'new-post',
-  };
+  });
 
-  const notification = await Notification.create(req.body.notification);
-
-  if (notification) {
-    notify(notification.type, notification);
-  }
+  // 04. Notifying the users
+  notify(notification.type, notification);
 
   res.status(200).json({
     status: 'success',
