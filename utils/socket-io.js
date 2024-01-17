@@ -17,17 +17,25 @@ exports.socketConnection = (server) => {
     pingTimeout: 160000,
     cors: {
       // origin: '*',
-      origin:
-        process.env.NODE_ENV === 'production'
-          ? false
-          : [
-              'http://localhost:8080',
-              'http://127.0.0.1:8080',
-              'http://localhost:5000',
-              'http://127.0.0.1:5000',
-              'http://localhost:5501',
-              'http://127.0.0.1:5501',
-            ],
+      // origin:
+      //   process.env.NODE_ENV === 'production'
+      //     ? false
+      //     : [
+      //         'http://localhost:8080',
+      //         'http://127.0.0.1:8080',
+      //         'http://localhost:5000',
+      //         'http://127.0.0.1:5000',
+      //         'http://localhost:5501',
+      //         'http://127.0.0.1:5501',
+      //       ],
+      origin: [
+        'http://localhost:8080',
+        'http://127.0.0.1:8080',
+        'http://localhost:5000',
+        'http://127.0.0.1:5000',
+        'http://localhost:5501',
+        'http://127.0.0.1:5501',
+      ],
       credentials: true,
     },
   });

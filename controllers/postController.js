@@ -9,6 +9,8 @@ const Post = require('../models/postModel');
 const Like = require('../models/likeModel');
 const Notification = require('../models/notificationModel');
 const User = require('../models/userModel');
+const View = require('../models/viewModel');
+
 const { getOne, updateOne, deleteOne, getAll } = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -175,8 +177,14 @@ exports.getPostBySlug = catchAsync(async (req, res, next) => {
     return next(new AppError('No document found.', 404));
   }
 
+  // To be refactored  => bull + redis
+  // Increase viewsCounter
   if (doc.author !== req.user.id) {
-    await Post.increaseCounter(doc.id, 'viewsCounter');
+    // await Post.increaseCounter(doc.id, 'viewsCounter');
+    let view = await View.findOne({ post: doc.id, user: req.user.id });
+    if (!view) {
+      await View.create({ post: doc.id, user: req.user.id });
+    }
   }
 
   res.status(200).json({

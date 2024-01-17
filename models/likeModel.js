@@ -14,6 +14,10 @@ const likeSchema = mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  createdAt: {
+    type: Date,
+    default: Date.now(),
+  },
 });
 
 likeSchema.index({ user: 1, post: 1 }, { unique: true });
