@@ -18,9 +18,11 @@ router
   .route('/post-image')
   .post(postController.uploadPostImage, postController.setImgURL);
 
+router.route('/search').post(postController.searchPosts);
+
 router
   .route('/')
-  .get(postController.getPosts) //authController.protect,
+  .get(postController.getPosts)
   .post(
     authController.protect,
     authController.restrictTo('moderator', 'admin'),

@@ -280,7 +280,6 @@ exports.createPost = catchAsync(async (req, res, next) => {
   });
 });
 
-// To review - restrict when a post is published for example
 exports.updatePostState = catchAsync(async (req, res, next) => {
   const filteredBody = filterObj(req.body, 'state');
 
@@ -297,6 +296,36 @@ exports.updatePostState = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       post: updatedPost,
+    },
+  });
+});
+
+exports.searchPosts = catchAsync(async (req, res, next) => {
+  const query = {
+    $text: { $search: `\"${req.body.keyword}\"` },
+    state: { $eq: 'approved' },
+  };
+
+  const sort = { score: { $meta: 'textScore' } };
+
+  const projection = {
+    _id: 0,
+    slug: 1,
+    title: 1,
+    summary: 1,
+    coverImage: 1,
+    score: { $meta: 'textScore' },
+  };
+
+  // find documents based on our query, sort, and projection
+  const docs = await Post.find(query).sort(sort).select(projection);
+
+  res.status(200).json({
+    status: 'success',
+    requestedAt: new Date(),
+    results: docs.length,
+    data: {
+      docs,
     },
   });
 });

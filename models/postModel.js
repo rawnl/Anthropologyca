@@ -69,6 +69,7 @@ const postSchema = mongoose.Schema(
   }
 );
 
+postSchema.index({ title: 'text', summary: 'text', body: 'text' });
 postSchema.index({ publishedAt: 1, downloadCounter: 1 });
 postSchema.index({ slug: 1 });
 
@@ -100,14 +101,17 @@ postSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'author',
     select: '-__v -passwordChangetAt',
+  }).populate({
+    path: 'tags',
+    select: '-__v -slug',
   });
   next();
 });
 
 postSchema.pre('findOneAndUpdate', function (next) {
   this.set({ updatedAt: Date.now() });
-  if (this._update.state && this._update.state === 'approved')
-    this.set({ publishedAt: Date.now() });
+  // if (this._update.state && this._update.state === 'approved')
+  //   this.set({ publishedAt: Date.now() });
   next();
 });
 
