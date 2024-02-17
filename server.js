@@ -2,8 +2,9 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 
 const { availableParallelism } = require('node:os');
-const cluster = require('node:cluster');
-const { createAdapter, setupPrimary } = require('@socket.io/cluster-adapter');
+
+// const cluster = require('node:cluster');
+// const { createAdapter, setupPrimary } = require('@socket.io/cluster-adapter');
 // const { createClient } = require('redis');
 
 const Redis = require('ioredis');
@@ -25,18 +26,18 @@ mongoose.connect(dbUri).then(() => {
   console.log('Database connected.');
 });
 
-if (cluster.isPrimary) {
-  const numCPUs = availableParallelism();
-  // create one worker per available core
-  for (let i = 0; i < numCPUs - 3; i++) {
-    cluster.fork({
-      PORT: port + i,
-    });
-  }
+// if (cluster.isPrimary) {
+//   const numCPUs = availableParallelism();
+//   // create one worker per available core
+//   for (let i = 0; i < numCPUs - 3; i++) {
+//     cluster.fork({
+//       PORT: port + i,
+//     });
+//   }
 
-  // set up the adapter on the primary thread
-  return setupPrimary();
-}
+//   // set up the adapter on the primary thread
+//   return setupPrimary();
+// }
 
 async function main() {
   // 01. Create Redis Client
@@ -83,8 +84,9 @@ async function main() {
   });
 
   // 03. Initialising socket.io
-  const adapter = createAdapter();
-  socketConnection(server, adapter, redisClient);
+  // const adapter = createAdapter();
+  // socketConnection(server, adapter, redisClient);
+  socketConnection(server, redisClient);
 }
 
 main();

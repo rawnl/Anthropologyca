@@ -115,12 +115,10 @@ const getAllConnectedUsers = async () => {
   });
 };
 
-exports.socketConnection = (server, adapter, client) => {
+exports.socketConnection = (server, client) => {
   redisClient = client;
   io = require('socket.io')(server, {
     connectionStateRecovery: {},
-    // set up the adapter on each worker thread
-    adapter: adapter,
     pingTimeout: 160000,
     cors: {
       // origin: '*',
