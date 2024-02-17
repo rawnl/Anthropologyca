@@ -259,14 +259,14 @@ exports.createPost = catchAsync(async (req, res, next) => {
     filter = { _id: { $ne: new ObjectId(req.body.author) }, role: 'admin' };
   }
 
-  receivers = await User.find(filter, '_id');
+  const receivers = await User.find(filter, '_id');
 
   // 03. Creating and saving the notification
   const notification = await Notification.create({
     sender: req.body.author,
-    receivers: receivers,
+    receivers,
     content: {
-      postId: doc._id,
+      postSlug: doc.slug,
     },
     type: 'new-post',
   });

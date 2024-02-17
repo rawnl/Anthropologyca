@@ -54,7 +54,7 @@
     "nodemailer-brevo-transport": "^2.1.0",
     "pug": "^3.0.2",
     "redis": "^4.6.13",
-    "sharp": "^0.32.4",
+    "sharp": "^0.33.2",
     "socket.io": "^4.7.2",
     "socketio-jwt": "^4.6.2",
     "validator": "^13.9.0",
