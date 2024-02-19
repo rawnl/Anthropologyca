@@ -63,4 +63,8 @@ module.exports = class Email {
       'طلب تغيير كلمة المرور - أنثروبولوجيكا'
     );
   }
+
+  async sendThankYouEmail() {
+    await this.sendEmail('thankYou', 'شكرا لتواصلك معنا - أنثروبولوجيكا');
+  }
 };
