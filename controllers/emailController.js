@@ -1,5 +1,3 @@
-const nodemailer = require('nodemailer');
-
 const catchAsync = require('../utils/catchAsync');
 const Mail = require('../models/mailModel');
 const Email = require('../utils/email');
@@ -7,7 +5,7 @@ const Email = require('../utils/email');
 const { deleteOne, getAll } = require('./handlerFactory');
 const AppError = require('../utils/appError');
 
-exports.getEmails = getAll(Email);
+exports.getEmails = getAll(Mail);
 
 exports.sendEmail = catchAsync(async (req, res, next) => {
   if (
