@@ -11,13 +11,19 @@ router
     authController.restrictTo('admin'),
     emailController.getEmails
   )
-  .post(emailController.handleSendEmail);
+  .post(emailController.sendEmail);
+
 router
   .route('/:id')
-  .delete(
+  .post(
     authController.protect,
     authController.restrictTo('admin'),
-    emailController.deleteEmail
+    emailController.replyEmail
   );
+// .delete(
+//   authController.protect,
+//   authController.restrictTo('admin'),
+//   emailController.deleteEmail
+// );
 
 module.exports = router;

@@ -67,4 +67,23 @@ module.exports = class Email {
   async sendThankYouEmail() {
     await this.sendEmail('thankYou', 'شكرا لتواصلك معنا - أنثروبولوجيكا');
   }
+
+  async sendReplyEmail(subject, body) {
+    const html = pug.renderFile(`${__dirname}/../views/emails/reply.pug`, {
+      name: this.name,
+      url: this.url,
+      subject: subject,
+      body: body,
+    });
+
+    const mailOptions = {
+      from: this.from,
+      to: this.to,
+      subject,
+      html,
+      text: htmlToText(html),
+    };
+
+    await this.newTransport().sendMail(mailOptions);
+  }
 };
