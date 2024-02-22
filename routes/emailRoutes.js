@@ -20,10 +20,5 @@ router
     authController.restrictTo('admin'),
     emailController.replyEmail
   );
-// .delete(
-//   authController.protect,
-//   authController.restrictTo('admin'),
-//   emailController.deleteEmail
-// );
 
 module.exports = router;

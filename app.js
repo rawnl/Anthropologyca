@@ -85,7 +85,7 @@ app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/comments', commentRouter);
 app.use('/api/v1/likes', likeRouter);
 app.use('/api/v1/notifications', notificationRouter);
-app.use('/api/v1/contact', emailRouter);
+app.use('/api/v1/emails', emailRouter);
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');

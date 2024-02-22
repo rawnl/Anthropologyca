@@ -1,11 +1,39 @@
-const catchAsync = require('../utils/catchAsync');
+const ObjectId = require('mongodb').ObjectId;
 const Mail = require('../models/mailModel');
 const Email = require('../utils/email');
-
-const { deleteOne, getAll } = require('./handlerFactory');
+const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
-exports.getEmails = getAll(Mail);
+exports.getEmails = catchAsync(async (req, res, next) => {
+  const filters = {
+    $and: [
+      { type: 'inbox' },
+      {
+        $or: [
+          { isResolved: false },
+          {
+            $and: [
+              { isResolved: true },
+              { resolved_by: new ObjectId(req.user.id) },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const docs = await Mail.find(filters).populate({
+    path: 'replyId',
+    select: ['subject', 'body', 'type', 'sent_at'],
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      docs,
+    },
+  });
+});
 
 exports.sendEmail = catchAsync(async (req, res, next) => {
   if (
@@ -22,6 +50,7 @@ exports.sendEmail = catchAsync(async (req, res, next) => {
     from: req.body.email,
     subject: req.body.subject,
     body: req.body.message,
+    type: 'inbox',
   };
 
   const doc = await Mail.create(email);
@@ -53,11 +82,14 @@ exports.replyEmail = catchAsync(async (req, res, next) => {
 
   if (!originalEmail)
     return next(
-      new AppError(`You can not reply to an email that does not exist`, 404)
+      new AppError(`You can not reply to an email that does not exist`, 400)
     );
 
   if (originalEmail.isResolved)
-    return next(new AppError(`This e-mail has already got replied to`, 404));
+    return next(new AppError(`This e-mail has already got replied to`, 400));
+
+  if (originalEmail.type === 'outbox')
+    return next(new AppError(`You can not reply to this e-mail`, 400));
 
   // 01. Save reply e-mail to db
   const replyEmail = {
@@ -100,5 +132,3 @@ exports.replyEmail = catchAsync(async (req, res, next) => {
     },
   });
 });
-
-// exports.deleteEmail = deleteOne(Email);

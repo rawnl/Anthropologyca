@@ -39,7 +39,7 @@ const mailSchema = mongoose.Schema({
     enum: ['inbox', 'outbox'],
   },
 
-  seen_by: [{ type: mongoose.Schema.ObjectId, ref: 'User' }],
+  // seen_by: [{ type: mongoose.Schema.ObjectId, ref: 'User' }],
 
   isResolved: {
     type: Boolean,
@@ -62,6 +62,10 @@ const mailSchema = mongoose.Schema({
     ref: 'Mail',
   },
 });
+
+mailSchema.index({ type: 1 });
+mailSchema.index({ isResolved: 1 });
+mailSchema.index({ resolved_by: 1 });
 
 mailSchema.pre('save', function (next) {
   // Common attributes
@@ -109,6 +113,24 @@ mailSchema.pre('findOneAndUpdate', function (next) {
   }
   next();
 });
+
+mailSchema.pre(/^find/, function (next) {
+  if (this.type === 'inbox' && this.isResolved) {
+    this.populate({
+      path: 'replyId',
+      select: '-__v',
+    });
+  }
+
+  next();
+});
+
+// mailSchema.pre('aggregate', function (next) {
+//   this.pipeline().push({
+//     $match: { type: { $eq: 'inbox' } },
+//   });
+//   next();
+// });
 
 const Mail = mongoose.model('Mail', mailSchema);
 
